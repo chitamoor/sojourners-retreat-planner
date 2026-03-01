@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { DEFAULTS } from './constants';
 import type { RoomAllocation, FixedCostConfig } from './types';
-import { computePricingTiers, computeFinancialSummary, totalHeadcount, meetingCostPerPerson } from './utils/pricing';
+import { computePricingTiers, computeFinancialSummary, totalHeadcount } from './utils/pricing';
 import HotelReference from './components/HotelReference';
 import RoomAllocator from './components/RoomAllocator';
 import FixedCosts from './components/FixedCosts';
@@ -22,8 +22,6 @@ const DEFAULT_ALLOCATION: RoomAllocation = {
 const DEFAULT_FIXED_CONFIG: FixedCostConfig = {
   retreatCostPerPerson: DEFAULTS.fixedCostPerPerson,
   childrenUnder3: DEFAULTS.childrenUnder3,
-  overrideMeetingCostPerPerson: false,
-  meetingCostOverride: 0,
 };
 
 export default function App() {
@@ -43,8 +41,6 @@ export default function App() {
     setAllocation(DEFAULT_ALLOCATION);
     setFixedConfig(DEFAULT_FIXED_CONFIG);
   }
-
-  const autoCost = meetingCostPerPerson(headcount);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -97,7 +93,6 @@ export default function App() {
         <RoomAllocator allocation={allocation} onChange={setAllocation} />
         <FixedCosts
           config={fixedConfig}
-          payingAttendees={headcount}
           onChange={setFixedConfig}
         />
         <PricingTiers tiers={tiers} />
@@ -108,8 +103,6 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-xs text-slate-400">
           Sojourners Retreat · Pricing Planner · Based on contract dated Feb 23, 2026
-          <span className="mx-2">·</span>
-          Meeting room cost auto-spread: ${autoCost.toFixed(2)} per paying attendee
         </div>
       </footer>
     </div>

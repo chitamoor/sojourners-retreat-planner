@@ -16,12 +16,6 @@ export function roomCostPerPerson(ratePerNight: number, occupants: number): numb
   return roomTotalCost(ratePerNight) / occupants;
 }
 
-/** Auto-calculated meeting cost per paying attendee */
-export function meetingCostPerPerson(payingAttendees: number): number {
-  if (payingAttendees <= 0) return 0;
-  return CONTRACT.meetingRooms.totalEstimated / payingAttendees;
-}
-
 /** Total headcount from a given room allocation */
 export function totalHeadcount(alloc: RoomAllocation): number {
   return (
@@ -57,12 +51,6 @@ export function computePricingTiers(
   alloc: RoomAllocation,
   fixedConfig: FixedCostConfig
 ): PricingTier[] {
-  // Children under 3 are not counted in room allocation — headcount = paying adults only
-  const headcount = totalHeadcount(alloc);
-  const meetingCost = fixedConfig.overrideMeetingCostPerPerson
-    ? fixedConfig.meetingCostOverride
-    : meetingCostPerPerson(headcount);
-
   const tiers: PricingTier[] = [
     {
       id: 'studio-solo',
@@ -71,7 +59,6 @@ export function computePricingTiers(
       occupants: 1,
       roomCostPerPerson: roomCostPerPerson(STUDIO_RATE, 1),
       fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      meetingCostPerPerson: meetingCost,
       totalPerPerson: 0,
       roomCount: alloc.studioKingSolo,
       headcount: alloc.studioKingSolo * 1,
@@ -84,7 +71,6 @@ export function computePricingTiers(
       occupants: 2,
       roomCostPerPerson: roomCostPerPerson(STUDIO_RATE, 2),
       fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      meetingCostPerPerson: meetingCost,
       totalPerPerson: 0,
       roomCount: alloc.studioKingShared,
       headcount: alloc.studioKingShared * 2,
@@ -97,7 +83,6 @@ export function computePricingTiers(
       occupants: 2,
       roomCostPerPerson: roomCostPerPerson(PENTHOUSE_RATE, 2),
       fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      meetingCostPerPerson: meetingCost,
       totalPerPerson: 0,
       roomCount: alloc.penthouse2person,
       headcount: alloc.penthouse2person * 2,
@@ -110,7 +95,6 @@ export function computePricingTiers(
       occupants: 3,
       roomCostPerPerson: roomCostPerPerson(PENTHOUSE_RATE, 3),
       fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      meetingCostPerPerson: meetingCost,
       totalPerPerson: 0,
       roomCount: alloc.penthouse3person,
       headcount: alloc.penthouse3person * 3,
@@ -123,7 +107,6 @@ export function computePricingTiers(
       occupants: 4,
       roomCostPerPerson: roomCostPerPerson(PENTHOUSE_RATE, 4),
       fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      meetingCostPerPerson: meetingCost,
       totalPerPerson: 0,
       roomCount: alloc.penthouse4person,
       headcount: alloc.penthouse4person * 4,
@@ -131,9 +114,9 @@ export function computePricingTiers(
     },
   ];
 
-  // Compute totals
+  // Compute totals: room share + fixed retreat cost only
   tiers.forEach(t => {
-    t.totalPerPerson = t.roomCostPerPerson + t.fixedCostPerPerson + t.meetingCostPerPerson;
+    t.totalPerPerson = t.roomCostPerPerson + t.fixedCostPerPerson;
   });
 
   // Mark best value (lowest total among tiers with at least 1 room)

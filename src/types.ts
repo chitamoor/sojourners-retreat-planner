@@ -8,9 +8,7 @@ export interface RoomAllocation {
 
 export interface FixedCostConfig {
   retreatCostPerPerson: number; // $50–$70 program/operational cost
-  childrenUnder3: number;       // children exempt from fixed cost
-  overrideMeetingCostPerPerson: boolean;
-  meetingCostOverride: number;  // if overriding auto-calculated meeting cost spread
+  childrenUnder3: number;       // informational only — attend free, no cost impact
 }
 
 export interface PricingTier {
@@ -20,8 +18,7 @@ export interface PricingTier {
   occupants: number;
   roomCostPerPerson: number;    // room + tax share per person
   fixedCostPerPerson: number;   // retreat program cost
-  meetingCostPerPerson: number; // shared meeting room cost
-  totalPerPerson: number;       // sum of all above
+  totalPerPerson: number;       // room + fixed
   roomCount: number;            // how many rooms in this tier
   headcount: number;            // total people in this tier
   isBestValue: boolean;

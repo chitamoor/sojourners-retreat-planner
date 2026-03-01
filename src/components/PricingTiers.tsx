@@ -35,7 +35,6 @@ export default function PricingTiers({ tiers }: Props) {
     total: parseFloat(t.totalPerPerson.toFixed(2)),
     room: parseFloat(t.roomCostPerPerson.toFixed(2)),
     fixed: parseFloat(t.fixedCostPerPerson.toFixed(2)),
-    meeting: parseFloat(t.meetingCostPerPerson.toFixed(2)),
     type: t.roomType,
     active: t.roomCount > 0,
   }));
@@ -84,7 +83,6 @@ export default function PricingTiers({ tiers }: Props) {
               <div className="space-y-1 text-xs text-slate-500 border-t border-slate-200 pt-2">
                 <CostRow label="Room share" value={tier.roomCostPerPerson} />
                 <CostRow label="Retreat cost" value={tier.fixedCostPerPerson} />
-                <CostRow label="Meeting (shared)" value={tier.meetingCostPerPerson} />
               </div>
 
               <div className="mt-3 pt-2 border-t border-slate-200 flex justify-between text-xs text-slate-400">
@@ -142,7 +140,6 @@ const labelMap: Record<string, string> = {
   total: 'Total per person',
   room: 'Room share',
   fixed: 'Retreat cost',
-  meeting: 'Meeting (shared)',
 };
 
 function CostRow({ label, value }: { label: string; value: number }) {
