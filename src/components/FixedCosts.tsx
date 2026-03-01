@@ -70,7 +70,7 @@ export default function FixedCosts({ config, payingAttendees, onChange }: Props)
             Children Under 3 Years
           </label>
           <p className="text-xs text-slate-500 mb-3">
-            Exempt from the fixed retreat program cost
+            Attending free · not counted in any cost calculation
           </p>
           <div className="flex items-center justify-between">
             <button
@@ -87,8 +87,8 @@ export default function FixedCosts({ config, payingAttendees, onChange }: Props)
               className="w-10 h-10 rounded-full bg-green-200 hover:bg-green-300 text-green-800 text-xl font-bold flex items-center justify-center transition-colors"
             >+</button>
           </div>
-          <p className="text-xs text-slate-500 mt-3 text-center">
-            Savings: {fmt(config.childrenUnder3 * config.retreatCostPerPerson)}
+          <p className="text-xs text-emerald-600 font-medium mt-3 text-center">
+            $0.00 — completely free
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function FixedCosts({ config, payingAttendees, onChange }: Props)
             Meeting Room Cost (shared)
           </label>
           <p className="text-xs text-slate-500 mb-3">
-            {fmt(CONTRACT.meetingRooms.totalEstimated)} total ÷ paying attendees
+            {fmt(CONTRACT.meetingRooms.totalEstimated)} total ÷ room occupants
           </p>
 
           <div className="flex items-center gap-2 mb-3">

@@ -30,8 +30,8 @@ export interface PricingTier {
 export interface FinancialSummary {
   totalRoomsUsed: number;
   totalRoomsCommitted: number;
-  totalHeadcount: number;
-  payingAttendees: number;       // excludes children under 3
+  totalHeadcount: number;        // paying attendees from room allocation only
+  childrenUnder3: number;        // informational only — not counted in any cost
   totalRevenueCollected: number;
   totalHotelBill: number;
   surplus: number;               // positive = surplus, negative = deficit

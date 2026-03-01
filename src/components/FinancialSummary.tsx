@@ -11,7 +11,7 @@ export default function FinancialSummary({ summary }: Props) {
     totalRoomsUsed,
     totalRoomsCommitted,
     totalHeadcount,
-    payingAttendees,
+    childrenUnder3,
     totalRevenueCollected,
     totalHotelBill,
     surplus,
@@ -64,8 +64,8 @@ export default function FinancialSummary({ summary }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             label="Total Headcount"
-            value={totalHeadcount.toString()}
-            sub={`${payingAttendees} paying · ${totalHeadcount - payingAttendees} children <3`}
+            value={(totalHeadcount + childrenUnder3).toString()}
+            sub={`${totalHeadcount} paying · ${childrenUnder3} children <3 (free)`}
             color="slate"
           />
           <StatCard
@@ -216,7 +216,7 @@ export default function FinancialSummary({ summary }: Props) {
                   <tr className="border-t border-slate-200 font-semibold">
                     <td className="pt-2 text-slate-700">Total</td>
                     <td className="pt-2 text-right text-slate-600">{totalRoomsUsed}</td>
-                    <td className="pt-2 text-right text-slate-600">{totalHeadcount}</td>
+                    <td className="pt-2 text-right text-slate-600">{totalHeadcount + childrenUnder3}</td>
                     <td className="pt-2 text-right text-slate-400">—</td>
                     <td className="pt-2 text-right text-indigo-700">{fmt(totalRevenueCollected)}</td>
                   </tr>

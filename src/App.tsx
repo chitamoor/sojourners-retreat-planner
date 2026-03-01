@@ -32,10 +32,6 @@ export default function App() {
   const [fixedConfig, setFixedConfig] = useState<FixedCostConfig>(DEFAULT_FIXED_CONFIG);
 
   const headcount = useMemo(() => totalHeadcount(allocation), [allocation]);
-  const payingAttendees = useMemo(
-    () => Math.max(0, headcount - fixedConfig.childrenUnder3),
-    [headcount, fixedConfig.childrenUnder3]
-  );
   const tiers = useMemo(() => computePricingTiers(allocation, fixedConfig), [allocation, fixedConfig]);
   const summary = useMemo(() => computeFinancialSummary(allocation, fixedConfig), [allocation, fixedConfig]);
 
@@ -48,7 +44,7 @@ export default function App() {
     setFixedConfig(DEFAULT_FIXED_CONFIG);
   }
 
-  const autoCost = meetingCostPerPerson(payingAttendees);
+  const autoCost = meetingCostPerPerson(headcount);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -101,7 +97,7 @@ export default function App() {
         <RoomAllocator allocation={allocation} onChange={setAllocation} />
         <FixedCosts
           config={fixedConfig}
-          payingAttendees={payingAttendees}
+          payingAttendees={headcount}
           onChange={setFixedConfig}
         />
         <PricingTiers tiers={tiers} />

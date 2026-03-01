@@ -57,11 +57,11 @@ export function computePricingTiers(
   alloc: RoomAllocation,
   fixedConfig: FixedCostConfig
 ): PricingTier[] {
+  // Children under 3 are not counted in room allocation — headcount = paying adults only
   const headcount = totalHeadcount(alloc);
-  const payingAttendees = Math.max(0, headcount - fixedConfig.childrenUnder3);
   const meetingCost = fixedConfig.overrideMeetingCostPerPerson
     ? fixedConfig.meetingCostOverride
-    : meetingCostPerPerson(payingAttendees);
+    : meetingCostPerPerson(headcount);
 
   const tiers: PricingTier[] = [
     {
@@ -154,8 +154,7 @@ export function computeFinancialSummary(
   fixedConfig: FixedCostConfig
 ): FinancialSummary {
   const tiers = computePricingTiers(alloc, fixedConfig);
-  const headcount = totalHeadcount(alloc);
-  const payingAttendees = Math.max(0, headcount - fixedConfig.childrenUnder3);
+  const headcount = totalHeadcount(alloc); // paying adults only; children under 3 excluded
   const roomsUsed = totalRoomsUsed(alloc);
 
   // Revenue from each tier (only rooms with allocations)
@@ -182,7 +181,7 @@ export function computeFinancialSummary(
     totalRoomsUsed: roomsUsed,
     totalRoomsCommitted: CONTRACT.rooms.studioKing.total + CONTRACT.rooms.penthouse.total,
     totalHeadcount: headcount,
-    payingAttendees,
+    childrenUnder3: fixedConfig.childrenUnder3,
     totalRevenueCollected,
     totalHotelBill,
     surplus: totalRevenueCollected - totalHotelBill,
