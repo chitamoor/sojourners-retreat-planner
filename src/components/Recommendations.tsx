@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CONTRACT } from '../constants';
-import type { RoomAllocation, RoomMix, FixedCostConfig } from '../types';
-import { computePricingTiers, fmt, totalHeadcount } from '../utils/pricing';
+import type { RoomAllocation, RoomMix, FixedCostConfig, FinancialSummary } from '../types';
+import { computePricingTiers, computeFinancialSummary, fmt, totalHeadcount } from '../utils/pricing';
 
 interface Props {
   fixedConfig: FixedCostConfig;
@@ -89,6 +89,204 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
+// ─── Planning Scenarios ───────────────────────────────────────────────────────
+
+interface PlanningScenarioConfig {
+  id: string;
+  name: string;
+  icon: string;
+  tag: string;
+  tagColor: string;
+  description: string;
+  allocation: RoomAllocation;
+  extraRooms: number;
+  insight: string;
+}
+
+interface PlanningScenarioMetrics extends PlanningScenarioConfig {
+  minPrice: number;
+  maxPrice: number;
+  headcount: number;
+  roomsUsed: number;
+  summary: FinancialSummary;
+}
+
+const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
+  {
+    id: 'max-pack',
+    name: 'Max Capacity — No Extras',
+    icon: '🏨',
+    tag: 'No Negotiation',
+    tagColor: 'bg-emerald-100 text-emerald-700',
+    description: 'All 60 rooms at absolute maximum occupancy. Everyone shares — studios pack to 3, penthouses to 5. Lowest possible cost per person.',
+    allocation: {
+      studioKingSolo: 0, studioKingShared: 0, studioKing3person: 45,
+      penthouse2person: 0, penthouse3person: 0, penthouse4person: 0, penthouse5person: 15,
+    },
+    extraRooms: 0,
+    insight: 'Best case financially. Requires everyone to be comfortable sharing beds and rooms with non-family members.',
+  },
+  {
+    id: 'hit-250',
+    name: 'Reach 250 — Negotiate 8 Rooms',
+    icon: '🤝',
+    tag: 'Negotiate with Hotel',
+    tagColor: 'bg-amber-100 text-amber-700',
+    description: 'Add 8 extra penthouses (subject to hotel availability) on top of all 60 rooms at max occupancy. Hits the 250-guest target.',
+    allocation: {
+      studioKingSolo: 0, studioKingShared: 0, studioKing3person: 45,
+      penthouse2person: 0, penthouse3person: 0, penthouse4person: 0, penthouse5person: 23,
+    },
+    extraRooms: 8,
+    insight: 'Requires hotel to have 8 extra penthouses. Adds ~$4,500 to the hotel bill but per-person prices stay the same.',
+  },
+  {
+    id: 'seniors-comfort',
+    name: 'Seniors / Comfort First',
+    icon: '🛏️',
+    tag: 'High Privacy',
+    tagColor: 'bg-violet-100 text-violet-700',
+    description: 'Most people get their own bed or share only with a spouse/partner. Solo studios + shared-2 dominate. Ideal if congregation skews older.',
+    allocation: {
+      studioKingSolo: 20, studioKingShared: 20, studioKing3person: 5,
+      penthouse2person: 10, penthouse3person: 5, penthouse4person: 0, penthouse5person: 0,
+    },
+    extraRooms: 0,
+    insight: 'Only ~110 attendees from 60 rooms. Higher per-person cost. Will likely need to limit registration or have the church subsidize room costs.',
+  },
+  {
+    id: 'family-groups',
+    name: 'Family & Friend Groups',
+    icon: '👨‍👩‍👧',
+    tag: 'Balanced',
+    tagColor: 'bg-indigo-100 text-indigo-700',
+    description: 'Families share full penthouses; friend groups share studio sofa beds. Good balance of privacy and capacity for a mixed-age congregation.',
+    allocation: {
+      studioKingSolo: 0, studioKingShared: 15, studioKing3person: 30,
+      penthouse2person: 0, penthouse3person: 3, penthouse4person: 7, penthouse5person: 5,
+    },
+    extraRooms: 0,
+    insight: '~182 guests from 60 rooms. Families keep penthouses to themselves; couples or friend pairs share studios.',
+  },
+  {
+    id: 'limit-private',
+    name: 'Cap at ~120 — More Private',
+    icon: '✨',
+    tag: 'Limit Registration',
+    tagColor: 'bg-rose-100 text-rose-700',
+    description: 'Intentionally limit attendance to ~120 guests. Most people get their own bed or share only with their spouse. A smaller, more intimate retreat.',
+    allocation: {
+      studioKingSolo: 15, studioKingShared: 25, studioKing3person: 5,
+      penthouse2person: 8, penthouse3person: 4, penthouse4person: 3, penthouse5person: 0,
+    },
+    extraRooms: 0,
+    insight: 'Most comfortable option. Higher per-person cost due to less sharing. Requires strict registration cap — consider a waitlist.',
+  },
+  {
+    id: 'negotiate-comfort',
+    name: 'Negotiate 5 Rooms + Comfort',
+    icon: '⚖️',
+    tag: 'Light Negotiation',
+    tagColor: 'bg-sky-100 text-sky-700',
+    description: 'Negotiate just 5 extra penthouses while keeping existing rooms at a comfortable (not max) occupancy. Middle ground for groups and seniors.',
+    allocation: {
+      studioKingSolo: 5, studioKingShared: 20, studioKing3person: 20,
+      penthouse2person: 0, penthouse3person: 3, penthouse4person: 5, penthouse5person: 12,
+    },
+    extraRooms: 5,
+    insight: '~194 guests with a comfortable mix. Less aggressive than negotiating 8 rooms, more capacity than 60 rooms alone.',
+  },
+];
+
+function PlanningScenarios({ fixedConfig }: { fixedConfig: FixedCostConfig }) {
+  const metrics = useMemo<PlanningScenarioMetrics[]>(() =>
+    PLANNING_SCENARIO_CONFIGS.map(s => {
+      const tiers = computePricingTiers(s.allocation, fixedConfig);
+      const summary = computeFinancialSummary(s.allocation, fixedConfig);
+      const active = tiers.filter(t => t.roomCount > 0);
+      return {
+        ...s,
+        minPrice: active.length ? Math.min(...active.map(t => t.totalPerPerson)) : 0,
+        maxPrice: active.length ? Math.max(...active.map(t => t.totalPerPerson)) : 0,
+        headcount: totalHeadcount(s.allocation),
+        roomsUsed: Object.values(s.allocation).reduce((a, b) => a + b, 0),
+        summary,
+      };
+    }),
+  [fixedConfig]);
+
+  return (
+    <div className="mb-6 rounded-xl border border-slate-200 p-4 bg-slate-50">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-sm font-semibold text-slate-700">Planning Scenarios</h3>
+        <span className="text-xs text-slate-400">Based on current retreat cost setting</span>
+      </div>
+      <p className="text-xs text-slate-500 mb-4">
+        Six strategic paths — compare headcount, pricing, and trade-offs before deciding on room distribution.
+        Scenarios marked <span className="font-medium text-amber-700">Negotiate</span> require contacting the hotel for additional rooms.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {metrics.map(s => <PlanningScenarioCard key={s.id} s={s} />)}
+      </div>
+    </div>
+  );
+}
+
+function PlanningScenarioCard({ s }: { s: PlanningScenarioMetrics }) {
+  const hasSurplus = s.summary.surplus >= 0;
+  const totalRooms = s.roomsUsed + s.extraRooms;
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-2.5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xl leading-none">{s.icon}</span>
+          <h4 className="font-semibold text-slate-800 text-sm leading-tight">{s.name}</h4>
+        </div>
+        <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${s.tagColor}`}>{s.tag}</span>
+      </div>
+
+      <p className="text-xs text-slate-500 leading-relaxed">{s.description}</p>
+
+      {/* Key stats */}
+      <div className="grid grid-cols-3 gap-1.5 text-center">
+        <div className="bg-slate-50 rounded-lg p-2">
+          <p className="text-lg font-bold text-slate-800">{s.headcount}</p>
+          <p className="text-xs text-slate-400">guests</p>
+        </div>
+        <div className="bg-slate-50 rounded-lg p-2">
+          <p className="text-xs font-semibold text-slate-700 leading-tight">{fmt(s.minPrice)}</p>
+          <p className="text-xs text-slate-400">– {fmt(s.maxPrice)}</p>
+          <p className="text-xs text-slate-400">per person</p>
+        </div>
+        <div className={`rounded-lg p-2 ${s.extraRooms > 0 ? 'bg-amber-50' : 'bg-slate-50'}`}>
+          {s.extraRooms > 0 ? (
+            <>
+              <p className="text-lg font-bold text-amber-600">{totalRooms}</p>
+              <p className="text-xs text-amber-600">rooms (+{s.extraRooms})</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-bold text-slate-800">{totalRooms}</p>
+              <p className="text-xs text-slate-400">rooms</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Surplus / deficit pill */}
+      <div className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-xs font-medium ${hasSurplus ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+        <span>{hasSurplus ? '✓ Surplus after hotel bill' : '⚠ Deficit vs hotel bill'}</span>
+        <span>{hasSurplus ? '+' : '−'}{fmt(Math.abs(s.summary.surplus))}</span>
+      </div>
+
+      {/* Trade-off note */}
+      <p className="text-xs text-slate-500 italic border-t border-slate-100 pt-2 leading-relaxed">{s.insight}</p>
+    </div>
+  );
+}
+
 export default function Recommendations({ fixedConfig, currentAllocation, roomMix, onApply }: Props) {
   const [targetHeadcount, setTargetHeadcount] = useState(250);
   const [appliedId, setAppliedId] = useState<string | null>(null);
@@ -114,6 +312,9 @@ export default function Recommendations({ fixedConfig, currentAllocation, roomMi
           <p className="text-xs text-slate-500">Preset room distributions to hit capacity and pricing goals</p>
         </div>
       </div>
+
+      {/* Planning Scenarios */}
+      <PlanningScenarios fixedConfig={fixedConfig} />
 
       {/* Capacity Analysis */}
       <div className="mb-6 rounded-xl border border-slate-200 p-4 bg-slate-50">
