@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CONTRACT } from '../constants';
 import type { RoomAllocation } from '../types';
 import { studioRoomsUsed, penthouseRoomsUsed } from '../utils/pricing';
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function RoomAllocator({ allocation, onChange }: Props) {
+  const [showHelp, setShowHelp] = useState(false);
+
   const studioUsed = studioRoomsUsed(allocation);
   const penthouseUsed = penthouseRoomsUsed(allocation);
   const studioMax = CONTRACT.rooms.studioKing.total;
@@ -23,13 +26,63 @@ export default function RoomAllocator({ allocation, onChange }: Props) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <span className="text-2xl">🛏️</span>
-        <div>
-          <h2 className="font-semibold text-slate-800">Room Allocation</h2>
-          <p className="text-xs text-slate-500">Distribute the 60 committed rooms across occupancy preferences</p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🛏️</span>
+          <div>
+            <h2 className="font-semibold text-slate-800">Room Allocation</h2>
+            <p className="text-xs text-slate-500">Distribute the 60 committed rooms across occupancy preferences</p>
+          </div>
         </div>
+        <button
+          onClick={() => setShowHelp(h => !h)}
+          className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <span>?</span>
+          <span>{showHelp ? 'Hide help' : 'How do these work?'}</span>
+        </button>
       </div>
+
+      {/* Instruction panel */}
+      {showHelp && (
+        <div className="mb-5 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-slate-600 space-y-2">
+          <p className="font-semibold text-indigo-800 mb-1">How to use the room sliders</p>
+          <ul className="space-y-1.5 text-xs">
+            <li className="flex gap-2">
+              <span className="text-indigo-400 mt-0.5">▸</span>
+              <span>Each row represents a <strong>room configuration</strong> — how many people will share one room of that type. The number badge shows how many rooms are assigned to that configuration.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-indigo-400 mt-0.5">▸</span>
+              <span>Sliders are <strong>independent</strong> — they don't auto-balance. You must ensure the rows add up to no more than the available rooms (45 Studio, 15 Penthouse).</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-indigo-400 mt-0.5">▸</span>
+              <span>A <strong>red warning</strong> appears if the total exceeds available rooms. Reduce another row to clear it.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-indigo-400 mt-0.5">▸</span>
+              <span>Use the <strong>− and + buttons</strong> for precise one-room adjustments, or drag the slider for quick changes.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-indigo-400 mt-0.5">▸</span>
+              <span><strong>Unallocated rooms</strong> still cost the church money. Leaving more than 12 rooms empty (below 48 total) triggers hotel attrition fees.</span>
+            </li>
+          </ul>
+          <div className="mt-3 pt-3 border-t border-indigo-100 grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-white rounded-lg p-2.5 border border-indigo-100">
+              <p className="font-semibold text-slate-700 mb-1">Studio King Suite</p>
+              <p className="text-slate-500">1 king bed + pull-out sofa bed</p>
+              <p className="text-slate-500">Max <strong>3 people</strong> per room</p>
+            </div>
+            <div className="bg-white rounded-lg p-2.5 border border-indigo-100">
+              <p className="font-semibold text-slate-700 mb-1">Penthouse Suite</p>
+              <p className="text-slate-500">2 queen beds + loft space</p>
+              <p className="text-slate-500">Max <strong>5 people</strong> per room</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Studio King */}
@@ -40,7 +93,7 @@ export default function RoomAllocator({ allocation, onChange }: Props) {
               {studioUsed} / {studioMax} rooms
             </span>
           </div>
-          <p className="text-xs text-slate-500 mb-4">1 king bed · max 2 occupants</p>
+          <p className="text-xs text-slate-500 mb-4">1 king bed + sofa bed · max 3 occupants</p>
 
           <SliderRow
             label="Solo (1 person per room)"
@@ -56,12 +109,19 @@ export default function RoomAllocator({ allocation, onChange }: Props) {
             max={studioMax}
             onChange={v => set('studioKingShared', v)}
             color="indigo"
+          />
+          <SliderRow
+            label="3 people (king bed + sofa bed)"
+            value={allocation.studioKing3person}
+            max={studioMax}
+            onChange={v => set('studioKing3person', v)}
+            color="indigo"
             note="Best value for studio rooms"
           />
 
           {studioOver && (
             <p className="mt-2 text-xs text-red-600 font-medium">
-              ⚠ Over by {studioUsed - studioMax} room{studioUsed - studioMax > 1 ? 's' : ''}
+              ⚠ Over by {studioUsed - studioMax} room{studioUsed - studioMax > 1 ? 's' : ''} — reduce another row
             </p>
           )}
           {!studioOver && studioRemaining > 0 && (
@@ -77,7 +137,7 @@ export default function RoomAllocator({ allocation, onChange }: Props) {
               {penthouseUsed} / {penthouseMax} rooms
             </span>
           </div>
-          <p className="text-xs text-slate-500 mb-4">2 queen beds, 2 bathrooms · max 4 occupants</p>
+          <p className="text-xs text-slate-500 mb-4">2 queen beds + loft · max 5 occupants</p>
 
           <SliderRow
             label="2 people (separate queen beds)"
@@ -100,12 +160,19 @@ export default function RoomAllocator({ allocation, onChange }: Props) {
             max={penthouseMax}
             onChange={v => set('penthouse4person', v)}
             color="violet"
+          />
+          <SliderRow
+            label="5 people (includes loft)"
+            value={allocation.penthouse5person}
+            max={penthouseMax}
+            onChange={v => set('penthouse5person', v)}
+            color="violet"
             note="Best value overall"
           />
 
           {penthouseOver && (
             <p className="mt-2 text-xs text-red-600 font-medium">
-              ⚠ Over by {penthouseUsed - penthouseMax} room{penthouseUsed - penthouseMax > 1 ? 's' : ''}
+              ⚠ Over by {penthouseUsed - penthouseMax} room{penthouseUsed - penthouseMax > 1 ? 's' : ''} — reduce another row
             </p>
           )}
           {!penthouseOver && penthouseRemaining > 0 && (

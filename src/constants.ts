@@ -15,15 +15,15 @@ export const CONTRACT = {
       label: 'Studio King Suite',
       total: 45,
       ratePerNight: 169,
-      description: '1 king bed, full kitchen',
-      maxOccupancy: 2,
+      description: '1 king bed + sofa bed, full kitchen',
+      maxOccupancy: 3,
     },
     penthouse: {
       label: 'Penthouse Suite',
       total: 15,
       ratePerNight: 249,
-      description: '2 queen beds, 2 bathrooms, full kitchen',
-      maxOccupancy: 4,
+      description: '2 queen beds + loft, 2 bathrooms, full kitchen',
+      maxOccupancy: 5,
     },
   },
 
@@ -68,8 +68,10 @@ export const DEFAULTS = {
 
   // Default room allocation split
   studioKingSolo: 5,
-  studioKingShared: 40,
+  studioKingShared: 35,
+  studioKing3person: 5,
   penthouse2person: 2,
   penthouse3person: 3,
-  penthouse4person: 10,
+  penthouse4person: 8,
+  penthouse5person: 2,
 } as const;

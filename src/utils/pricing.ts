@@ -21,9 +21,11 @@ export function totalHeadcount(alloc: RoomAllocation): number {
   return (
     alloc.studioKingSolo * 1 +
     alloc.studioKingShared * 2 +
+    alloc.studioKing3person * 3 +
     alloc.penthouse2person * 2 +
     alloc.penthouse3person * 3 +
-    alloc.penthouse4person * 4
+    alloc.penthouse4person * 4 +
+    alloc.penthouse5person * 5
   );
 }
 
@@ -32,18 +34,20 @@ export function totalRoomsUsed(alloc: RoomAllocation): number {
   return (
     alloc.studioKingSolo +
     alloc.studioKingShared +
+    alloc.studioKing3person +
     alloc.penthouse2person +
     alloc.penthouse3person +
-    alloc.penthouse4person
+    alloc.penthouse4person +
+    alloc.penthouse5person
   );
 }
 
 export function studioRoomsUsed(alloc: RoomAllocation): number {
-  return alloc.studioKingSolo + alloc.studioKingShared;
+  return alloc.studioKingSolo + alloc.studioKingShared + alloc.studioKing3person;
 }
 
 export function penthouseRoomsUsed(alloc: RoomAllocation): number {
-  return alloc.penthouse2person + alloc.penthouse3person + alloc.penthouse4person;
+  return alloc.penthouse2person + alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
 }
 
 /** Build all pricing tiers from current config */
@@ -74,6 +78,18 @@ export function computePricingTiers(
       totalPerPerson: 0,
       roomCount: alloc.studioKingShared,
       headcount: alloc.studioKingShared * 2,
+      isBestValue: false,
+    },
+    {
+      id: 'studio-3',
+      label: 'Studio King — 3 People',
+      roomType: 'studio',
+      occupants: 3,
+      roomCostPerPerson: roomCostPerPerson(STUDIO_RATE, 3),
+      fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
+      totalPerPerson: 0,
+      roomCount: alloc.studioKing3person,
+      headcount: alloc.studioKing3person * 3,
       isBestValue: false,
     },
     {
@@ -110,6 +126,18 @@ export function computePricingTiers(
       totalPerPerson: 0,
       roomCount: alloc.penthouse4person,
       headcount: alloc.penthouse4person * 4,
+      isBestValue: false,
+    },
+    {
+      id: 'penthouse-5',
+      label: 'Penthouse — 5 People',
+      roomType: 'penthouse',
+      occupants: 5,
+      roomCostPerPerson: roomCostPerPerson(PENTHOUSE_RATE, 5),
+      fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
+      totalPerPerson: 0,
+      roomCount: alloc.penthouse5person,
+      headcount: alloc.penthouse5person * 5,
       isBestValue: false,
     },
   ];

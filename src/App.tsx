@@ -14,9 +14,11 @@ const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VIT
 const DEFAULT_ALLOCATION: RoomAllocation = {
   studioKingSolo: DEFAULTS.studioKingSolo,
   studioKingShared: DEFAULTS.studioKingShared,
+  studioKing3person: DEFAULTS.studioKing3person,
   penthouse2person: DEFAULTS.penthouse2person,
   penthouse3person: DEFAULTS.penthouse3person,
   penthouse4person: DEFAULTS.penthouse4person,
+  penthouse5person: DEFAULTS.penthouse5person,
 };
 
 const DEFAULT_FIXED_CONFIG: FixedCostConfig = {

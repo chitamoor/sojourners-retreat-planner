@@ -1,9 +1,11 @@
 export interface RoomAllocation {
   studioKingSolo: number;       // studio king rooms with 1 occupant
   studioKingShared: number;     // studio king rooms with 2 occupants sharing king bed
+  studioKing3person: number;    // studio king rooms with 3 occupants (king + sofa bed)
   penthouse2person: number;     // penthouse rooms with 2 occupants
   penthouse3person: number;     // penthouse rooms with 3 occupants
   penthouse4person: number;     // penthouse rooms with 4 occupants
+  penthouse5person: number;     // penthouse rooms with 5 occupants (includes loft)
 }
 
 export interface FixedCostConfig {
