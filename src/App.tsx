@@ -28,7 +28,7 @@ const DEFAULT_FIXED_CONFIG: FixedCostConfig = {
 };
 
 export default function App() {
-  const [unlocked, setUnlocked] = useState(!AUTH_ENABLED);
+  const [unlocked, setUnlocked] = useState(!AUTH_ENABLED || !!localStorage.getItem('retreat_auth'));
   const [allocation, setAllocation] = useState<RoomAllocation>(DEFAULT_ALLOCATION);
   const [fixedConfig, setFixedConfig] = useState<FixedCostConfig>(DEFAULT_FIXED_CONFIG);
 

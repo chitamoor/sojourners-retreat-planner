@@ -17,6 +17,7 @@ export default function PasswordGate({ onUnlock }: Props) {
     e.preventDefault();
     if (username === EXPECTED_USER && password === EXPECTED_PASS) {
       setError(false);
+      localStorage.setItem('retreat_auth', '1');
       onUnlock();
     } else {
       setError(true);
