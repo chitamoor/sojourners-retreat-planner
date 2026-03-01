@@ -1,3 +1,8 @@
+export interface RoomMix {
+  studio: number;    // how many of the 60 rooms are Studio King
+  penthouse: number; // how many are Penthouse (always 60 - studio)
+}
+
 export interface RoomAllocation {
   studioKingSolo: number;       // studio king rooms with 1 occupant
   studioKingShared: number;     // studio king rooms with 2 occupants sharing king bed

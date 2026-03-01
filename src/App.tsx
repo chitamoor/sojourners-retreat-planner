@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { DEFAULTS } from './constants';
-import type { RoomAllocation, FixedCostConfig } from './types';
+import { DEFAULTS, CONTRACT } from './constants';
+import type { RoomAllocation, RoomMix, FixedCostConfig } from './types';
 import { computePricingTiers, computeFinancialSummary, totalHeadcount } from './utils/pricing';
 import HotelReference from './components/HotelReference';
 import RoomAllocator from './components/RoomAllocator';
@@ -11,6 +11,36 @@ import PasswordGate from './components/PasswordGate';
 import Recommendations from './components/Recommendations';
 
 const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VITE_APP_PASSWORD);
+const TOTAL_ROOMS = CONTRACT.rooms.studioKing.total + CONTRACT.rooms.penthouse.total; // 60
+
+const DEFAULT_MIX: RoomMix = {
+  studio: CONTRACT.rooms.studioKing.total,
+  penthouse: CONTRACT.rooms.penthouse.total,
+};
+
+/** Clamp existing allocation so it doesn't exceed new mix limits. */
+function clampAllocationToMix(alloc: RoomAllocation, mix: RoomMix): RoomAllocation {
+  const result = { ...alloc };
+
+  const studioUsed = alloc.studioKingSolo + alloc.studioKingShared + alloc.studioKing3person;
+  if (studioUsed > mix.studio) {
+    const scale = mix.studio / studioUsed;
+    result.studioKingSolo = Math.floor(alloc.studioKingSolo * scale);
+    result.studioKingShared = Math.floor(alloc.studioKingShared * scale);
+    result.studioKing3person = mix.studio - result.studioKingSolo - result.studioKingShared;
+  }
+
+  const penthouseUsed = alloc.penthouse2person + alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
+  if (penthouseUsed > mix.penthouse) {
+    const scale = mix.penthouse / penthouseUsed;
+    result.penthouse2person = Math.floor(alloc.penthouse2person * scale);
+    result.penthouse3person = Math.floor(alloc.penthouse3person * scale);
+    result.penthouse4person = Math.floor(alloc.penthouse4person * scale);
+    result.penthouse5person = mix.penthouse - result.penthouse2person - result.penthouse3person - result.penthouse4person;
+  }
+
+  return result;
+}
 
 const DEFAULT_ALLOCATION: RoomAllocation = {
   studioKingSolo: DEFAULTS.studioKingSolo,
@@ -31,6 +61,12 @@ export default function App() {
   const [unlocked, setUnlocked] = useState(!AUTH_ENABLED || !!localStorage.getItem('retreat_auth'));
   const [allocation, setAllocation] = useState<RoomAllocation>(DEFAULT_ALLOCATION);
   const [fixedConfig, setFixedConfig] = useState<FixedCostConfig>(DEFAULT_FIXED_CONFIG);
+  const [roomMix, setRoomMix] = useState<RoomMix>(DEFAULT_MIX);
+
+  function handleMixChange(newMix: RoomMix) {
+    setRoomMix(newMix);
+    setAllocation(prev => clampAllocationToMix(prev, newMix));
+  }
 
   const headcount = useMemo(() => totalHeadcount(allocation), [allocation]);
   const tiers = useMemo(() => computePricingTiers(allocation, fixedConfig), [allocation, fixedConfig]);
@@ -43,6 +79,7 @@ export default function App() {
   function handleReset() {
     setAllocation(DEFAULT_ALLOCATION);
     setFixedConfig(DEFAULT_FIXED_CONFIG);
+    setRoomMix(DEFAULT_MIX);
   }
 
   return (
@@ -96,9 +133,15 @@ export default function App() {
         <Recommendations
           fixedConfig={fixedConfig}
           currentAllocation={allocation}
+          roomMix={roomMix}
           onApply={setAllocation}
         />
-        <RoomAllocator allocation={allocation} onChange={setAllocation} />
+        <RoomAllocator
+          allocation={allocation}
+          roomMix={roomMix}
+          onChange={setAllocation}
+          onMixChange={handleMixChange}
+        />
         <FixedCosts
           config={fixedConfig}
           onChange={setFixedConfig}

@@ -59,6 +59,9 @@ export const CONTRACT = {
   attritionThreshold: 0.80, // Hotel requires 80% room usage or attrition fees apply
 } as const;
 
+export const TOTAL_ROOMS =
+  45 + 15; // 60 committed rooms — Studio King + Penthouse
+
 export const DEFAULTS = {
   fixedCostPerPerson: 60,    // midpoint of $50–$70 range
   fixedCostMin: 50,

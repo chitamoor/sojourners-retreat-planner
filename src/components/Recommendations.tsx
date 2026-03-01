@@ -1,18 +1,14 @@
 import { useMemo, useState } from 'react';
 import { CONTRACT } from '../constants';
-import type { RoomAllocation, FixedCostConfig } from '../types';
+import type { RoomAllocation, RoomMix, FixedCostConfig } from '../types';
 import { computePricingTiers, fmt, totalHeadcount } from '../utils/pricing';
 
 interface Props {
   fixedConfig: FixedCostConfig;
   currentAllocation: RoomAllocation;
+  roomMix: RoomMix;
   onApply: (allocation: RoomAllocation) => void;
 }
-
-// Maximum possible headcount with 60 rooms at full occupancy
-const MAX_CAPACITY =
-  CONTRACT.rooms.studioKing.total * CONTRACT.rooms.studioKing.maxOccupancy +
-  CONTRACT.rooms.penthouse.total * CONTRACT.rooms.penthouse.maxOccupancy;
 
 const TARGET_PRICE_MIN = 175;
 const TARGET_PRICE_MAX = 450;
@@ -93,11 +89,16 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-export default function Recommendations({ fixedConfig, currentAllocation, onApply }: Props) {
+export default function Recommendations({ fixedConfig, currentAllocation, roomMix, onApply }: Props) {
   const [targetHeadcount, setTargetHeadcount] = useState(250);
   const [appliedId, setAppliedId] = useState<string | null>(null);
 
   const currentHeadcount = totalHeadcount(currentAllocation);
+
+  // Dynamic max capacity based on current room mix
+  const MAX_CAPACITY =
+    roomMix.studio * CONTRACT.rooms.studioKing.maxOccupancy +
+    roomMix.penthouse * CONTRACT.rooms.penthouse.maxOccupancy;
 
   function handleApply(scenario: Scenario) {
     onApply(scenario.allocation);

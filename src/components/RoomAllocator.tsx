@@ -1,20 +1,25 @@
 import { useState } from 'react';
-import { CONTRACT } from '../constants';
-import type { RoomAllocation } from '../types';
+import { CONTRACT, TOTAL_ROOMS } from '../constants';
+import type { RoomAllocation, RoomMix } from '../types';
 import { studioRoomsUsed, penthouseRoomsUsed } from '../utils/pricing';
 
 interface Props {
   allocation: RoomAllocation;
+  roomMix: RoomMix;
   onChange: (alloc: RoomAllocation) => void;
+  onMixChange: (mix: RoomMix) => void;
 }
 
-export default function RoomAllocator({ allocation, onChange }: Props) {
+export default function RoomAllocator({ allocation, roomMix, onChange, onMixChange }: Props) {
   const [showHelp, setShowHelp] = useState(false);
 
   const studioUsed = studioRoomsUsed(allocation);
   const penthouseUsed = penthouseRoomsUsed(allocation);
-  const studioMax = CONTRACT.rooms.studioKing.total;
-  const penthouseMax = CONTRACT.rooms.penthouse.total;
+  const studioMax = roomMix.studio;
+  const penthouseMax = roomMix.penthouse;
+  const contractedStudio = CONTRACT.rooms.studioKing.total;
+  const contractedPenthouse = CONTRACT.rooms.penthouse.total;
+  const mixChanged = roomMix.studio !== contractedStudio;
   const studioRemaining = studioMax - studioUsed;
   const penthouseRemaining = penthouseMax - penthouseUsed;
   const studioOver = studioUsed > studioMax;
@@ -83,6 +88,87 @@ export default function RoomAllocator({ allocation, onChange }: Props) {
           </div>
         </div>
       )}
+
+      {/* Room Mix Slider */}
+      <div className={`mb-5 rounded-xl border-2 p-4 ${mixChanged ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700">Room Mix</h3>
+            <p className="text-xs text-slate-500">Split the 60 rooms between Studio King and Penthouse</p>
+          </div>
+          {mixChanged && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-amber-700 font-medium bg-amber-100 px-2 py-0.5 rounded-full">
+                ⚠ Hypothetical — actual contract is {contractedStudio}/{contractedPenthouse}
+              </span>
+              <button
+                onClick={() => onMixChange({ studio: contractedStudio, penthouse: contractedPenthouse })}
+                className="text-xs text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-300 px-2 py-0.5 rounded-lg transition-colors"
+              >
+                Reset mix
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Visual split bar */}
+        <div className="flex rounded-lg overflow-hidden h-8 mb-3 text-xs font-semibold">
+          <div
+            className="bg-indigo-500 flex items-center justify-center text-white transition-all duration-200"
+            style={{ width: `${(roomMix.studio / TOTAL_ROOMS) * 100}%`, minWidth: roomMix.studio > 0 ? '2rem' : 0 }}
+          >
+            {roomMix.studio > 0 && `${roomMix.studio}`}
+          </div>
+          <div
+            className="bg-violet-500 flex items-center justify-center text-white transition-all duration-200"
+            style={{ width: `${(roomMix.penthouse / TOTAL_ROOMS) * 100}%`, minWidth: roomMix.penthouse > 0 ? '2rem' : 0 }}
+          >
+            {roomMix.penthouse > 0 && `${roomMix.penthouse}`}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-indigo-600 font-semibold w-24">
+            Studio: {roomMix.studio}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={TOTAL_ROOMS}
+            value={roomMix.studio}
+            onChange={e => {
+              const studio = Number(e.target.value);
+              onMixChange({ studio, penthouse: TOTAL_ROOMS - studio });
+            }}
+            className="flex-1 accent-indigo-500"
+          />
+          <span className="text-xs text-violet-600 font-semibold w-28 text-right">
+            Penthouse: {roomMix.penthouse}
+          </span>
+        </div>
+
+        <div className="flex justify-between mt-2 text-xs text-slate-400">
+          <span>← More Studio (cheaper, less capacity per room)</span>
+          <span>More Penthouse (pricier, more capacity per room) →</span>
+        </div>
+
+        {/* Max capacity indicator */}
+        <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-4 text-xs text-slate-500">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-sm bg-indigo-400 inline-block" />
+            Studio max: <strong className="ml-1">{roomMix.studio * CONTRACT.rooms.studioKing.maxOccupancy} people</strong>
+            <span className="text-slate-400">({roomMix.studio} × {CONTRACT.rooms.studioKing.maxOccupancy})</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-sm bg-violet-400 inline-block" />
+            Penthouse max: <strong className="ml-1">{roomMix.penthouse * CONTRACT.rooms.penthouse.maxOccupancy} people</strong>
+            <span className="text-slate-400">({roomMix.penthouse} × {CONTRACT.rooms.penthouse.maxOccupancy})</span>
+          </span>
+          <span className="font-semibold text-slate-700 ml-auto">
+            Total max: {roomMix.studio * CONTRACT.rooms.studioKing.maxOccupancy + roomMix.penthouse * CONTRACT.rooms.penthouse.maxOccupancy} people
+          </span>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Studio King */}
