@@ -8,6 +8,7 @@ import FixedCosts from './components/FixedCosts';
 import PricingTiers from './components/PricingTiers';
 import FinancialSummary from './components/FinancialSummary';
 import PasswordGate from './components/PasswordGate';
+import Recommendations from './components/Recommendations';
 
 const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VITE_APP_PASSWORD);
 
@@ -92,6 +93,11 @@ export default function App() {
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <HotelReference />
+        <Recommendations
+          fixedConfig={fixedConfig}
+          currentAllocation={allocation}
+          onApply={setAllocation}
+        />
         <RoomAllocator allocation={allocation} onChange={setAllocation} />
         <FixedCosts
           config={fixedConfig}
