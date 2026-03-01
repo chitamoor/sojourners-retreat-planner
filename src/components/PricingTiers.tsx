@@ -96,7 +96,7 @@ export default function PricingTiers({ tiers }: Props) {
 
       {/* Bar chart comparison */}
       {activeTiers.length > 0 && (
-        <div>
+        <div id="pricing-tiers-chart">
           <h3 className="text-sm font-semibold text-slate-600 mb-3">Total Cost Comparison</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>

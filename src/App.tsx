@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DEFAULTS, CONTRACT } from './constants';
 import type { RoomAllocation, RoomMix, FixedCostConfig } from './types';
 import { computePricingTiers, computeFinancialSummary, totalHeadcount } from './utils/pricing';
@@ -9,9 +9,9 @@ import PricingTiers from './components/PricingTiers';
 import FinancialSummary from './components/FinancialSummary';
 import PasswordGate from './components/PasswordGate';
 import Recommendations from './components/Recommendations';
+import { exportToPdf } from './utils/exportPdf';
 
 const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VITE_APP_PASSWORD);
-const TOTAL_ROOMS = CONTRACT.rooms.studioKing.total + CONTRACT.rooms.penthouse.total; // 60
 
 const DEFAULT_MIX: RoomMix = {
   studio: CONTRACT.rooms.studioKing.total,
@@ -82,6 +82,23 @@ export default function App() {
     setRoomMix(DEFAULT_MIX);
   }
 
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    setExportProgress(0);
+    try {
+      await exportToPdf(
+        { allocation, roomMix, fixedConfig, tiers, summary },
+        pct => setExportProgress(pct)
+      );
+    } finally {
+      setExporting(false);
+      setExportProgress(0);
+    }
+  }, [allocation, roomMix, fixedConfig, tiers, summary]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -102,6 +119,20 @@ export default function App() {
               <div className="w-px h-8 bg-slate-200" />
               <HeadlineStat label="Rooms Used" value={`${summary.totalRoomsUsed} / 60`} />
             </div>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              {exporting ? (
+                <>
+                  <span className="inline-block w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  {exportProgress > 0 ? `${exportProgress}%` : 'Preparing…'}
+                </>
+              ) : (
+                <>⬇ Export PDF</>
+              )}
+            </button>
             <button
               onClick={handleReset}
               className="text-xs text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-300 px-3 py-1.5 rounded-lg transition-colors"
