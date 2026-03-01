@@ -31,18 +31,17 @@ export default function App() {
   const [allocation, setAllocation] = useState<RoomAllocation>(DEFAULT_ALLOCATION);
   const [fixedConfig, setFixedConfig] = useState<FixedCostConfig>(DEFAULT_FIXED_CONFIG);
 
-  if (!unlocked) {
-    return <PasswordGate onUnlock={() => setUnlocked(true)} />;
-  }
-
   const headcount = useMemo(() => totalHeadcount(allocation), [allocation]);
   const payingAttendees = useMemo(
     () => Math.max(0, headcount - fixedConfig.childrenUnder3),
     [headcount, fixedConfig.childrenUnder3]
   );
-
   const tiers = useMemo(() => computePricingTiers(allocation, fixedConfig), [allocation, fixedConfig]);
   const summary = useMemo(() => computeFinancialSummary(allocation, fixedConfig), [allocation, fixedConfig]);
+
+  if (!unlocked) {
+    return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+  }
 
   function handleReset() {
     setAllocation(DEFAULT_ALLOCATION);
