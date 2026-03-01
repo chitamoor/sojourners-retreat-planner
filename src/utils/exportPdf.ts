@@ -110,7 +110,7 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
   const statBoxes = [
     { label: 'Total Headcount', value: String(summary.totalHeadcount + summary.childrenUnder3), sub: `${summary.totalHeadcount} paying + ${summary.childrenUnder3} children` },
     { label: 'Rooms Used', value: `${summary.totalRoomsUsed} / ${summary.totalRoomsCommitted}`, sub: summary.attritionRisk ? 'Below 48 room minimum' : 'Attrition safe' },
-    { label: 'Revenue Collected', value: fmt(summary.totalRevenueCollected), sub: 'From all attendees' },
+    { label: 'Fees Collected', value: fmt(summary.totalRevenueCollected), sub: 'From all attendees' },
     { label: hasSurplus ? 'Surplus' : 'Deficit', value: fmt(Math.abs(summary.surplus)), sub: hasSurplus ? 'Above break-even' : 'Below break-even' },
   ];
 
@@ -137,7 +137,7 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
     { label: 'Accommodation cost (rooms allocated)', value: summary.accommodationsCost },
     { label: 'Meeting room rental (ballroom 3 days)', value: summary.meetingCost },
     { label: 'Total hotel bill', value: summary.totalHotelBill, bold: true },
-    { label: 'Total revenue from attendees', value: summary.totalRevenueCollected, bold: true },
+    { label: 'Total fees collected from attendees', value: summary.totalRevenueCollected, bold: true },
     { label: hasSurplus ? 'Surplus' : 'Deficit', value: summary.surplus, bold: true, color: hasSurplus ? EMERALD : RED },
   ];
 

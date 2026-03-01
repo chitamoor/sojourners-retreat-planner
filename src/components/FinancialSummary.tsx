@@ -57,7 +57,7 @@ export default function FinancialSummary({ summary }: Props) {
           <span className="text-2xl">📊</span>
           <div>
             <h2 className="font-semibold text-slate-800">Financial Summary</h2>
-            <p className="text-xs text-slate-500">Revenue vs. hotel bill · break-even analysis</p>
+            <p className="text-xs text-slate-500">Fees collected vs. hotel bill · break-even analysis</p>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function FinancialSummary({ summary }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Bar breakdown */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-600 mb-4">Costs vs Revenue</h3>
+            <h3 className="text-sm font-semibold text-slate-600 mb-4">Costs vs Fees Collected</h3>
             <div className="space-y-3">
               <BarRow
                 label="Accommodations"
@@ -115,7 +115,7 @@ export default function FinancialSummary({ summary }: Props) {
                   bold
                 />
                 <BarRow
-                  label="Total Revenue"
+                  label="Total Fees Collected"
                   value={totalRevenueCollected}
                   max={Math.max(totalHotelBill, totalRevenueCollected)}
                   color={hasSurplus ? 'bg-emerald-400' : 'bg-red-400'}
@@ -133,9 +133,9 @@ export default function FinancialSummary({ summary }: Props) {
             </div>
           </div>
 
-          {/* Pie chart of revenue by tier */}
+          {/* Pie chart of fees by tier */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-600 mb-4">Revenue by Tier</h3>
+            <h3 className="text-sm font-semibold text-slate-600 mb-4">Fees Collected by Tier</h3>
             {revenuePie.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={180}>
@@ -154,7 +154,7 @@ export default function FinancialSummary({ summary }: Props) {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(v) => [fmt(v as number), 'Revenue']}
+                      formatter={(v) => [fmt(v as number), 'Fees Collected']}
                       contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
                     />
                   </PieChart>
@@ -173,7 +173,7 @@ export default function FinancialSummary({ summary }: Props) {
               </>
             ) : (
               <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">
-                Allocate rooms to see revenue breakdown
+                Allocate rooms to see fee breakdown
               </div>
             )}
           </div>
