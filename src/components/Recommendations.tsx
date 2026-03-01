@@ -140,7 +140,7 @@ export default function Recommendations({ fixedConfig, currentAllocation, roomMi
           <CapacityStat
             label="Max Possible"
             value={<span className={`text-xl font-bold ${MAX_CAPACITY < targetHeadcount ? 'text-red-600' : 'text-slate-700'}`}>{MAX_CAPACITY}</span>}
-            sub="With 60 rooms at full capacity"
+            sub={`${roomMix.studio} studios×${CONTRACT.rooms.studioKing.maxOccupancy} + ${roomMix.penthouse} penthouses×${CONTRACT.rooms.penthouse.maxOccupancy}`}
             color={MAX_CAPACITY < targetHeadcount ? 'red' : 'slate'}
           />
           <CapacityStat
@@ -162,17 +162,22 @@ export default function Recommendations({ fixedConfig, currentAllocation, roomMi
         </div>
 
         {/* Capacity warning */}
-        {MAX_CAPACITY < targetHeadcount && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
-            <p className="font-semibold mb-0.5">Target exceeds maximum capacity</p>
-            <p>
-              With 60 contracted rooms at full occupancy (45 studios × 3 + 15 penthouses × 5), the absolute
-              maximum is <strong>{MAX_CAPACITY} people</strong>. To accommodate {targetHeadcount}, you would need
-              to negotiate approximately <strong>{Math.ceil((targetHeadcount - MAX_CAPACITY) / 3)} additional rooms</strong> with the hotel,
-              subject to availability.
-            </p>
-          </div>
-        )}
+        {MAX_CAPACITY < targetHeadcount && (() => {
+          const totalRooms = roomMix.studio + roomMix.penthouse;
+          const avgMaxOccupancy = totalRooms > 0 ? MAX_CAPACITY / totalRooms : CONTRACT.rooms.studioKing.maxOccupancy;
+          const additionalRoomsNeeded = Math.ceil((targetHeadcount - MAX_CAPACITY) / avgMaxOccupancy);
+          return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
+              <p className="font-semibold mb-0.5">Target exceeds maximum capacity</p>
+              <p>
+                With {totalRooms} contracted rooms at full occupancy ({roomMix.studio} studio{roomMix.studio !== 1 ? 's' : ''} × {CONTRACT.rooms.studioKing.maxOccupancy} + {roomMix.penthouse} penthouse{roomMix.penthouse !== 1 ? 's' : ''} × {CONTRACT.rooms.penthouse.maxOccupancy}), the absolute
+                maximum is <strong>{MAX_CAPACITY} people</strong>. To accommodate {targetHeadcount}, you would need
+                to negotiate approximately <strong>{additionalRoomsNeeded} additional room{additionalRoomsNeeded !== 1 ? 's' : ''}</strong> with the hotel,
+                subject to availability.
+              </p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Price range guide */}
