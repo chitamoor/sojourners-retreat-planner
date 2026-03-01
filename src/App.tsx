@@ -7,6 +7,9 @@ import RoomAllocator from './components/RoomAllocator';
 import FixedCosts from './components/FixedCosts';
 import PricingTiers from './components/PricingTiers';
 import FinancialSummary from './components/FinancialSummary';
+import PasswordGate from './components/PasswordGate';
+
+const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VITE_APP_PASSWORD);
 
 const DEFAULT_ALLOCATION: RoomAllocation = {
   studioKingSolo: DEFAULTS.studioKingSolo,
@@ -24,8 +27,13 @@ const DEFAULT_FIXED_CONFIG: FixedCostConfig = {
 };
 
 export default function App() {
+  const [unlocked, setUnlocked] = useState(!AUTH_ENABLED);
   const [allocation, setAllocation] = useState<RoomAllocation>(DEFAULT_ALLOCATION);
   const [fixedConfig, setFixedConfig] = useState<FixedCostConfig>(DEFAULT_FIXED_CONFIG);
+
+  if (!unlocked) {
+    return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+  }
 
   const headcount = useMemo(() => totalHeadcount(allocation), [allocation]);
   const payingAttendees = useMemo(
