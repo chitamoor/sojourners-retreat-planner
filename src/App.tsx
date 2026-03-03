@@ -9,6 +9,7 @@ import PricingTiers from './components/PricingTiers';
 import FinancialSummary from './components/FinancialSummary';
 import PasswordGate from './components/PasswordGate';
 import Recommendations from './components/Recommendations';
+import CurrentMix from './components/CurrentMix';
 import { exportToPdf } from './utils/exportPdf';
 
 const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VITE_APP_PASSWORD);
@@ -18,24 +19,30 @@ const DEFAULT_MIX: RoomMix = {
   penthouse: CONTRACT.rooms.penthouse.total,
 };
 
-/** Clamp existing allocation so it doesn't exceed new mix limits. */
-function clampAllocationToMix(alloc: RoomAllocation, mix: RoomMix): RoomAllocation {
+/**
+ * Scale the existing allocation to fit the new mix limits — both directions.
+ * - If current usage EXCEEDS the new mix limit: scale down proportionally.
+ * - If current usage is BELOW the new mix limit: scale up proportionally,
+ *   so that all committed rooms stay occupied when the mix changes.
+ * - If current usage is 0 for a type: leave at 0 (nothing to scale from).
+ */
+function scaleAllocationToMix(alloc: RoomAllocation, mix: RoomMix): RoomAllocation {
   const result = { ...alloc };
 
   const studioUsed = alloc.studioKingSolo + alloc.studioKingShared + alloc.studioKing3person;
-  if (studioUsed > mix.studio) {
+  if (studioUsed > 0 && studioUsed !== mix.studio) {
     const scale = mix.studio / studioUsed;
-    result.studioKingSolo = Math.floor(alloc.studioKingSolo * scale);
-    result.studioKingShared = Math.floor(alloc.studioKingShared * scale);
+    result.studioKingSolo = Math.round(alloc.studioKingSolo * scale);
+    result.studioKingShared = Math.round(alloc.studioKingShared * scale);
     result.studioKing3person = mix.studio - result.studioKingSolo - result.studioKingShared;
   }
 
   const penthouseUsed = alloc.penthouse2person + alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
-  if (penthouseUsed > mix.penthouse) {
+  if (penthouseUsed > 0 && penthouseUsed !== mix.penthouse) {
     const scale = mix.penthouse / penthouseUsed;
-    result.penthouse2person = Math.floor(alloc.penthouse2person * scale);
-    result.penthouse3person = Math.floor(alloc.penthouse3person * scale);
-    result.penthouse4person = Math.floor(alloc.penthouse4person * scale);
+    result.penthouse2person = Math.round(alloc.penthouse2person * scale);
+    result.penthouse3person = Math.round(alloc.penthouse3person * scale);
+    result.penthouse4person = Math.round(alloc.penthouse4person * scale);
     result.penthouse5person = mix.penthouse - result.penthouse2person - result.penthouse3person - result.penthouse4person;
   }
 
@@ -65,7 +72,7 @@ export default function App() {
 
   function handleMixChange(newMix: RoomMix) {
     setRoomMix(newMix);
-    setAllocation(prev => clampAllocationToMix(prev, newMix));
+    setAllocation(prev => scaleAllocationToMix(prev, newMix));
   }
 
   const [exporting, setExporting] = useState(false);
@@ -173,6 +180,7 @@ export default function App() {
           onChange={setAllocation}
           onMixChange={handleMixChange}
         />
+        <CurrentMix tiers={tiers} />
         <FixedCosts
           config={fixedConfig}
           onChange={setFixedConfig}
