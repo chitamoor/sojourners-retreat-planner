@@ -68,9 +68,12 @@ export default function App() {
     setAllocation(prev => clampAllocationToMix(prev, newMix));
   }
 
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+
   const headcount = useMemo(() => totalHeadcount(allocation), [allocation]);
   const tiers = useMemo(() => computePricingTiers(allocation, fixedConfig), [allocation, fixedConfig]);
-  const summary = useMemo(() => computeFinancialSummary(allocation, fixedConfig), [allocation, fixedConfig]);
+  const summary = useMemo(() => computeFinancialSummary(allocation, fixedConfig, roomMix), [allocation, fixedConfig, roomMix]);
 
   if (!unlocked) {
     return <PasswordGate onUnlock={() => setUnlocked(true)} />;
@@ -81,9 +84,6 @@ export default function App() {
     setFixedConfig(DEFAULT_FIXED_CONFIG);
     setRoomMix(DEFAULT_MIX);
   }
-
-  const [exporting, setExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
 
   const handleExport = useCallback(async () => {
     setExporting(true);
@@ -160,7 +160,7 @@ export default function App() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        <HotelReference />
+        <HotelReference roomMix={roomMix} summary={summary} />
         <Recommendations
           fixedConfig={fixedConfig}
           currentAllocation={allocation}

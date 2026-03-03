@@ -1,10 +1,25 @@
 import { useState } from 'react';
 import { CONTRACT } from '../constants';
+import type { RoomMix, FinancialSummary } from '../types';
 import { fmt } from '../utils/pricing';
 
-export default function HotelReference() {
+interface Props {
+  roomMix: RoomMix;
+  summary: FinancialSummary;
+}
+
+export default function HotelReference({ roomMix, summary }: Props) {
   const [open, setOpen] = useState(false);
   const taxPct = (CONTRACT.taxes.total * 100).toFixed(3);
+
+  const contractedStudio = CONTRACT.rooms.studioKing.total;
+  const contractedPenthouse = CONTRACT.rooms.penthouse.total;
+  const mixIsHypothetical =
+    roomMix.studio !== contractedStudio || roomMix.penthouse !== contractedPenthouse;
+
+  const totalCommitted = roomMix.studio + roomMix.penthouse;
+  const attritionMin = Math.ceil(totalCommitted * CONTRACT.attritionThreshold);
+  const accommodationsPreTax = summary.accommodationsCost / (1 + CONTRACT.taxes.total);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -32,13 +47,15 @@ export default function HotelReference() {
                 label="Studio King Suite"
                 sub="1 king bed, full kitchen"
                 rate={CONTRACT.rooms.studioKing.ratePerNight}
-                count={CONTRACT.rooms.studioKing.total}
+                count={roomMix.studio}
+                contractCount={contractedStudio}
               />
               <RoomRow
                 label="Penthouse Suite"
                 sub="2 queen beds, 2 bathrooms"
                 rate={CONTRACT.rooms.penthouse.ratePerNight}
-                count={CONTRACT.rooms.penthouse.total}
+                count={roomMix.penthouse}
+                contractCount={contractedPenthouse}
               />
             </div>
           </div>
@@ -60,18 +77,25 @@ export default function HotelReference() {
 
           {/* Totals */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Estimated Hotel Bill</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Estimated Hotel Bill</h3>
+              {mixIsHypothetical && (
+                <span className="text-xs text-amber-700 font-medium bg-amber-100 px-2 py-0.5 rounded-full">
+                  ⚠ Hypothetical mix
+                </span>
+              )}
+            </div>
             <div className="space-y-1 text-sm">
-              <BillRow label="Accommodations (pre-tax)" value={CONTRACT.accommodations.subtotalBeforeTax} />
-              <BillRow label="Accommodations (with tax)" value={CONTRACT.accommodations.totalWithTax} />
-              <BillRow label="Meeting Rooms (3 days)" value={CONTRACT.meetingRooms.totalEstimated} />
+              <BillRow label="Accommodations (pre-tax)" value={accommodationsPreTax} />
+              <BillRow label="Accommodations (with tax)" value={summary.accommodationsCost} />
+              <BillRow label="Meeting Rooms (3 days)" value={summary.meetingCost} />
               <div className="pt-1 border-t border-slate-100 flex justify-between font-semibold text-slate-700">
                 <span>Grand Total</span>
-                <span>{fmt(CONTRACT.grandTotal)}</span>
+                <span>{fmt(summary.totalHotelBill)}</span>
               </div>
             </div>
             <p className="text-xs text-slate-400 mt-3">
-              80% attrition minimum = {Math.ceil((CONTRACT.rooms.studioKing.total + CONTRACT.rooms.penthouse.total) * 0.8)} rooms/night
+              80% attrition minimum = {attritionMin} rooms/night
             </p>
           </div>
         </div>
@@ -80,14 +104,20 @@ export default function HotelReference() {
   );
 }
 
-function RoomRow({ label, sub, rate, count }: { label: string; sub: string; rate: number; count: number }) {
+function RoomRow({ label, sub, rate, count, contractCount }: { label: string; sub: string; rate: number; count: number; contractCount: number }) {
+  const isHypothetical = count !== contractCount;
   return (
     <div className="bg-slate-50 rounded-lg p-3">
       <div className="flex justify-between items-start">
         <span className="text-sm font-medium text-slate-700">{label}</span>
         <span className="text-sm font-semibold text-indigo-600">{fmt(rate)}<span className="text-xs font-normal text-slate-400">/night</span></span>
       </div>
-      <p className="text-xs text-slate-400 mt-0.5">{sub} · {count} rooms</p>
+      <p className="text-xs text-slate-400 mt-0.5">
+        {sub} · {count} rooms
+        {isHypothetical && (
+          <span className="ml-1 text-amber-600">(contract: {contractCount})</span>
+        )}
+      </p>
     </div>
   );
 }

@@ -541,9 +541,12 @@ function ScenarioCard({ scenario, fixedConfig, targetHeadcount, isApplied, onApp
             <span className="text-slate-500">{t.label}</span>
             <div className="flex items-center gap-2">
               <span className="text-slate-400">{t.roomCount} rooms · {t.headcount} people</span>
-              <span className={`font-semibold ${t.totalPerPerson >= TARGET_PRICE_MIN && t.totalPerPerson <= TARGET_PRICE_MAX ? 'text-emerald-700' : 'text-amber-700'}`}>
-                {fmt(t.totalPerPerson)}/person
-              </span>
+              <div className="relative group/price cursor-help">
+                <span className={`font-semibold ${t.totalPerPerson >= TARGET_PRICE_MIN && t.totalPerPerson <= TARGET_PRICE_MAX ? 'text-emerald-700' : 'text-amber-700'}`}>
+                  {fmt(t.totalPerPerson)}/person <span className="text-slate-400 font-normal">ⓘ</span>
+                </span>
+                <ScenarioPriceTooltip tier={t} />
+              </div>
             </div>
           </div>
         ))}
@@ -559,6 +562,66 @@ function ScenarioCard({ scenario, fixedConfig, targetHeadcount, isApplied, onApp
       >
         {isApplied ? '✓ Applied' : 'Apply this scenario'}
       </button>
+    </div>
+  );
+}
+
+// ─── Scenario price breakdown tooltip ────────────────────────────────────────
+
+function ScenarioPriceTooltip({ tier }: { tier: import('../types').PricingTier }) {
+  const rate =
+    tier.roomType === 'studio'
+      ? CONTRACT.rooms.studioKing.ratePerNight
+      : CONTRACT.rooms.penthouse.ratePerNight;
+  const nights = CONTRACT.event.nights;
+  const taxRate = CONTRACT.taxes.total;
+  const roomSubtotal = rate * nights;
+  const taxAmount = roomSubtotal * taxRate;
+  const roomTotal = roomSubtotal + taxAmount;
+  const roomShare = roomTotal / tier.occupants;
+
+  return (
+    <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-56 rounded-xl bg-slate-800 p-3 text-xs text-white opacity-0 shadow-2xl transition-opacity duration-150 group-hover/price:opacity-100">
+      <p className="mb-2 font-semibold text-slate-100">Price breakdown</p>
+      <div className="space-y-1 font-mono">
+        <ScenarioCalcRow label={`$${rate} × ${nights} nights`} value={fmt(roomSubtotal)} />
+        <ScenarioCalcRow label={`+ ${(taxRate * 100).toFixed(3)}% tax`} value={`+ ${fmt(taxAmount)}`} muted />
+        <div className="my-1.5 border-t border-slate-600" />
+        <ScenarioCalcRow label="Room total" value={fmt(roomTotal)} bold />
+        <ScenarioCalcRow
+          label={`÷ ${tier.occupants} ${tier.occupants === 1 ? 'person' : 'people'}`}
+          value={fmt(roomShare)}
+        />
+        <ScenarioCalcRow label="+ retreat cost" value={`+ ${fmt(tier.fixedCostPerPerson)}`} muted />
+        <div className="my-1.5 border-t border-slate-600" />
+        <ScenarioCalcRow label="Per person" value={fmt(tier.totalPerPerson)} bold highlight />
+      </div>
+      <div className="absolute left-auto right-4 top-full border-4 border-transparent border-t-slate-800" />
+    </div>
+  );
+}
+
+function ScenarioCalcRow({
+  label,
+  value,
+  bold,
+  muted,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  muted?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`flex justify-between gap-3 ${bold ? 'font-semibold' : ''} ${
+        highlight ? 'text-white' : muted ? 'text-slate-400' : 'text-slate-200'
+      }`}
+    >
+      <span>{label}</span>
+      <span className="shrink-0">{value}</span>
     </div>
   );
 }

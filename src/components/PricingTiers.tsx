@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import type { PricingTier } from '../types';
 import { fmt } from '../utils/pricing';
+import { CONTRACT } from '../constants';
 
 interface Props {
   tiers: PricingTier[];
@@ -41,12 +42,15 @@ export default function PricingTiers({ tiers }: Props) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <span className="text-2xl">🏷️</span>
-        <div>
-          <h2 className="font-semibold text-slate-800">Per-Person Pricing Tiers</h2>
-          <p className="text-xs text-slate-500">Cost per individual based on their room preference</p>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🏷️</span>
+          <div>
+            <h2 className="font-semibold text-slate-800">Per-Person Pricing Tiers</h2>
+            <p className="text-xs text-slate-500">Cost per individual based on their room preference</p>
+          </div>
         </div>
+        <span className="text-xs text-slate-400 italic hidden sm:block">Hover any price for a step-by-step breakdown</span>
       </div>
 
       {/* Tier Cards */}
@@ -76,8 +80,10 @@ export default function PricingTiers({ tiers }: Props) {
                 {occupantLabel(tier.occupants)}
               </p>
 
-              <div className="text-2xl font-bold text-slate-800 mb-3">
-                {fmt(tier.totalPerPerson)}
+              <div className="relative group/price mb-3 inline-flex items-baseline gap-1 cursor-help">
+                <span className="text-2xl font-bold text-slate-800">{fmt(tier.totalPerPerson)}</span>
+                <span className="text-xs text-slate-400 select-none">ⓘ</span>
+                {isActive && <PriceBreakdownTooltip tier={tier} />}
               </div>
 
               <div className="space-y-1 text-xs text-slate-500 border-t border-slate-200 pt-2">
@@ -169,4 +175,62 @@ function shortLabel(label: string): string {
 function occupantLabel(n: number): string {
   if (n === 1) return 'Solo — 1 person';
   return `Shared — ${n} people`;
+}
+
+function PriceBreakdownTooltip({ tier }: { tier: PricingTier }) {
+  const rate =
+    tier.roomType === 'studio'
+      ? CONTRACT.rooms.studioKing.ratePerNight
+      : CONTRACT.rooms.penthouse.ratePerNight;
+  const nights = CONTRACT.event.nights;
+  const taxRate = CONTRACT.taxes.total;
+  const roomSubtotal = rate * nights;
+  const taxAmount = roomSubtotal * taxRate;
+  const roomTotal = roomSubtotal + taxAmount;
+  const roomShare = roomTotal / tier.occupants;
+
+  return (
+    <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-3 w-60 -translate-x-1/2 rounded-xl bg-slate-800 p-3 text-xs text-white opacity-0 shadow-2xl transition-opacity duration-150 group-hover/price:opacity-100">
+      <p className="mb-2 font-semibold text-slate-100">Price breakdown</p>
+      <div className="space-y-1 font-mono">
+        <CalcRow label={`$${rate} × ${nights} nights`} value={fmt(roomSubtotal)} />
+        <CalcRow label={`+ ${(taxRate * 100).toFixed(3)}% tax`} value={`+ ${fmt(taxAmount)}`} muted />
+        <div className="my-1.5 border-t border-slate-600" />
+        <CalcRow label="Room total" value={fmt(roomTotal)} bold />
+        <CalcRow
+          label={`÷ ${tier.occupants} ${tier.occupants === 1 ? 'person' : 'people'}`}
+          value={fmt(roomShare)}
+        />
+        <CalcRow label="+ retreat cost" value={`+ ${fmt(tier.fixedCostPerPerson)}`} muted />
+        <div className="my-1.5 border-t border-slate-600" />
+        <CalcRow label="Per person" value={fmt(tier.totalPerPerson)} bold highlight />
+      </div>
+      <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+    </div>
+  );
+}
+
+function CalcRow({
+  label,
+  value,
+  bold,
+  muted,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  muted?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`flex justify-between gap-3 ${bold ? 'font-semibold' : ''} ${
+        highlight ? 'text-white' : muted ? 'text-slate-400' : 'text-slate-200'
+      }`}
+    >
+      <span>{label}</span>
+      <span className="shrink-0">{value}</span>
+    </div>
+  );
 }

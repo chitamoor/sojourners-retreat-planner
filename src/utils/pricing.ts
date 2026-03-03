@@ -159,10 +159,18 @@ export function computePricingTiers(
   return tiers;
 }
 
-/** Compute full financial summary */
+/** Compute full financial summary.
+ *
+ * @param committedRooms  The total rooms committed to the hotel (studio + penthouse).
+ *   When provided (from the main app), the hotel bill is based on ALL committed rooms
+ *   regardless of how many have occupants assigned in the sliders — because the hotel
+ *   charges for every contracted room. When absent (e.g. Recommendations scenarios where
+ *   every room is fully allocated), falls back to the rooms used in the allocation.
+ */
 export function computeFinancialSummary(
   alloc: RoomAllocation,
-  fixedConfig: FixedCostConfig
+  fixedConfig: FixedCostConfig,
+  committedRooms?: { studio: number; penthouse: number }
 ): FinancialSummary {
   const tiers = computePricingTiers(alloc, fixedConfig);
   const headcount = totalHeadcount(alloc); // paying adults only; children under 3 excluded
@@ -174,23 +182,25 @@ export function computeFinancialSummary(
     return sum + t.totalPerPerson * t.headcount;
   }, 0);
 
-  // Accommodation cost based on allocated rooms
-  const studioRooms = studioRoomsUsed(alloc);
-  const penthouseRooms = penthouseRoomsUsed(alloc);
+  // Hotel bills for ALL committed rooms — unallocated rooms still cost money.
+  const billedStudio = committedRooms?.studio ?? studioRoomsUsed(alloc);
+  const billedPenthouse = committedRooms?.penthouse ?? penthouseRoomsUsed(alloc);
+  const totalCommitted = billedStudio + billedPenthouse;
+
   const accommodationsCost =
-    studioRooms * STUDIO_RATE * NIGHTS * (1 + TAX) +
-    penthouseRooms * PENTHOUSE_RATE * NIGHTS * (1 + TAX);
+    billedStudio * STUDIO_RATE * NIGHTS * (1 + TAX) +
+    billedPenthouse * PENTHOUSE_RATE * NIGHTS * (1 + TAX);
 
   const meetingCost = CONTRACT.meetingRooms.totalEstimated;
   const totalHotelBill = accommodationsCost + meetingCost;
 
-  const attritionThreshold = Math.ceil(CONTRACT.rooms.studioKing.total + CONTRACT.rooms.penthouse.total) * CONTRACT.attritionThreshold;
+  const attritionThreshold = Math.ceil(totalCommitted * CONTRACT.attritionThreshold);
   const attritionRisk = roomsUsed < attritionThreshold;
   const attritionRoomsBelow = Math.max(0, attritionThreshold - roomsUsed);
 
   return {
     totalRoomsUsed: roomsUsed,
-    totalRoomsCommitted: CONTRACT.rooms.studioKing.total + CONTRACT.rooms.penthouse.total,
+    totalRoomsCommitted: totalCommitted,
     totalHeadcount: headcount,
     childrenUnder3: fixedConfig.childrenUnder3,
     totalRevenueCollected,
