@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CONTRACT, TOTAL_ROOMS } from '../constants';
 import type { RoomAllocation, RoomMix } from '../types';
-import { studioRoomsUsed, penthouseRoomsUsed, totalHeadcount, totalRoomsUsed } from '../utils/pricing';
+import { studioRoomsUsed, penthouseRoomsUsed } from '../utils/pricing';
 
 interface Props {
   allocation: RoomAllocation;
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function RoomAllocator({ allocation, roomMix, onChange, onMixChange }: Props) {
-  const [open, setOpen] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const studioUsed = studioRoomsUsed(allocation);
   const penthouseUsed = penthouseRoomsUsed(allocation);
@@ -25,94 +25,65 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
   const studioOver = studioUsed > studioMax;
   const penthouseOver = penthouseUsed > penthouseMax;
 
-  const roomsAllocated = totalRoomsUsed(allocation);
-  const totalCommitted = roomMix.studio + roomMix.penthouse;
-  const guestCount = totalHeadcount(allocation);
-  const attritionMin = Math.ceil(totalCommitted * CONTRACT.attritionThreshold);
-  const isOverAllocated = studioOver || penthouseOver;
-  const hasAttritionRisk = !isOverAllocated && roomsAllocated < attritionMin;
-
   function set(key: keyof RoomAllocation, value: number) {
     onChange({ ...allocation, [key]: Math.max(0, value) });
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
 
-      {/* ── Collapsed / expanded toggle header ── */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-50 transition-colors"
-      >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🛏️</span>
           <div>
-            <h2 className="font-semibold text-slate-800">Room Distribution</h2>
-            <p className="text-xs text-slate-500">Advanced · fine-tune after picking a Recommendations scenario</p>
+            <h2 className="font-semibold text-slate-800">Room Allocation</h2>
+            <p className="text-xs text-slate-500">Distribute the {roomMix.studio + roomMix.penthouse} committed rooms across occupancy preferences</p>
           </div>
         </div>
+        <button
+          onClick={() => setShowGuide(g => !g)}
+          className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <span>?</span>
+          <span>{showGuide ? 'Hide guide' : 'How to use'}</span>
+        </button>
+      </div>
 
-        <div className="flex items-center gap-3">
-          {/* Summary chips — visible when collapsed */}
-          {!open && (
-            <div className="hidden sm:flex items-center gap-2 text-xs">
-              <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">
-                {roomsAllocated} / {totalCommitted} rooms
-              </span>
-              <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">
-                {guestCount} guests
-              </span>
-              {isOverAllocated && (
-                <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-full font-medium">⚠ Over-allocated</span>
-              )}
-              {hasAttritionRisk && (
-                <span className="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">⚠ Attrition risk</span>
-              )}
-              {!isOverAllocated && !hasAttritionRisk && (
-                <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-medium">✓ Valid</span>
-              )}
+      {/* Collapsible workflow guide */}
+      {showGuide && (
+        <div className="mb-5 bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+          <p className="font-semibold text-indigo-800 text-sm mb-3">How to use this section</p>
+          <ol className="space-y-2 text-xs text-slate-600 list-none">
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">1</span>
+              <span><strong>Start with a Recommendations scenario above.</strong> Click "Apply this scenario" on any preset to load a sensible starting distribution into these sliders automatically.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">2</span>
+              <span><strong>Fine-tune using the sliders below.</strong> Each row controls how many rooms of that type will be assigned to a specific group size. Use − / + for one-room precision or drag the slider.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">3</span>
+              <span><strong>Keep room totals within budget.</strong> Studio sliders must sum to ≤ {roomMix.studio} rooms · Penthouse sliders must sum to ≤ {roomMix.penthouse} rooms. A red warning appears if you go over.</span>
+            </li>
+            <li className="flex gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">4</span>
+              <span><strong>Watch the numbers below update in real time.</strong> Pricing tiers, headcount, hotel bill, and surplus/deficit all recalculate instantly as you adjust.</span>
+            </li>
+          </ol>
+          <div className="mt-3 pt-3 border-t border-indigo-100 grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-white rounded-lg p-2.5 border border-indigo-100">
+              <p className="font-semibold text-slate-700 mb-0.5">Studio King Suite</p>
+              <p className="text-slate-500">1 king bed + pull-out sofa bed · max <strong>3 people</strong></p>
             </div>
-          )}
-          <span className="text-slate-400 text-sm shrink-0">{open ? '▲ Collapse' : '▼ Expand'}</span>
-        </div>
-      </button>
-
-      {/* ── Expanded content ── */}
-      {open && (
-        <div className="border-t border-slate-100 px-6 pb-6 pt-5">
-
-          {/* Workflow explanation */}
-          <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-            <p className="font-semibold text-indigo-800 text-sm mb-3">How to use this section</p>
-            <ol className="space-y-2 text-xs text-slate-600 list-none">
-              <li className="flex gap-2.5">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">1</span>
-                <span><strong>Start with a Recommendations scenario above.</strong> Click "Apply this scenario" on any preset to load a sensible starting distribution into these sliders automatically.</span>
-              </li>
-              <li className="flex gap-2.5">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">2</span>
-                <span><strong>Fine-tune using the sliders below.</strong> Each row controls how many rooms of that type will be assigned to a specific group size. Use − / + for one-room precision or drag the slider.</span>
-              </li>
-              <li className="flex gap-2.5">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">3</span>
-                <span><strong>Keep room totals within budget.</strong> Studio sliders must sum to ≤ {roomMix.studio} rooms · Penthouse sliders must sum to ≤ {roomMix.penthouse} rooms. A red warning appears if you go over.</span>
-              </li>
-              <li className="flex gap-2.5">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">4</span>
-                <span><strong>Watch the numbers below update in real time.</strong> Pricing tiers, headcount, hotel bill, and surplus/deficit all recalculate instantly as you adjust.</span>
-              </li>
-            </ol>
-            <div className="mt-3 pt-3 border-t border-indigo-100 grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-white rounded-lg p-2.5 border border-indigo-100">
-                <p className="font-semibold text-slate-700 mb-0.5">Studio King Suite</p>
-                <p className="text-slate-500">1 king bed + pull-out sofa bed · max <strong>3 people</strong></p>
-              </div>
-              <div className="bg-white rounded-lg p-2.5 border border-indigo-100">
-                <p className="font-semibold text-slate-700 mb-0.5">Penthouse Suite</p>
-                <p className="text-slate-500">2 queen beds + loft · max <strong>5 people</strong></p>
-              </div>
+            <div className="bg-white rounded-lg p-2.5 border border-indigo-100">
+              <p className="font-semibold text-slate-700 mb-0.5">Penthouse Suite</p>
+              <p className="text-slate-500">2 queen beds + loft · max <strong>5 people</strong></p>
             </div>
           </div>
+        </div>
+      )}
 
       {/* Room Mix Slider */}
       <div className={`mb-5 rounded-xl border-2 p-4 ${mixChanged ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
@@ -291,8 +262,6 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
           )}
         </div>
       </div>
-        </div>
-      )}
     </div>
   );
 }
