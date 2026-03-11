@@ -7,12 +7,12 @@ A React + TypeScript web app for planning and pricing the **Sojourners Retreat**
 - **Venue:** Staybridge Suites Oxnard River Ridge
 - **Dates:** Friday Oct 9 – Sunday Oct 11, 2026 (2 nights)
 - **Contract signed:** Feb 23, 2026
-- **Grand total contracted:** $31,807.66
+- **Grand total contracted:** $34,542.35
 - **Attrition threshold:** 80% of 60 rooms (≥ 48 rooms/night required)
 
 ## Room Types (contracted)
-- **45 Studio King Suites** — $169/night, max 3 occupants (king + sofa bed, full kitchen)
-- **15 Penthouse Suites** — $249/night, max 5 occupants (2 queen beds + loft, 2 bath, full kitchen)
+- **30 Studio King Suites** — $169/night, max 3 occupants (king + sofa bed, full kitchen)
+- **30 Penthouse Suites** — $249/night, max 5 occupants (2 queen beds + loft, 2 bath, full kitchen)
 - **Total: 60 committed rooms**
 
 ## Taxes
