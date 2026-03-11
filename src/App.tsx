@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { DEFAULTS, CONTRACT, BOOKABLE_STUDIO, BOOKABLE_PENTHOUSE, BOOKABLE_TOTAL, PAID_STUDIO, PAID_PENTHOUSE } from './constants';
+import { DEFAULTS, BOOKABLE_STUDIO, BOOKABLE_PENTHOUSE, BOOKABLE_TOTAL, PAID_STUDIO, PAID_PENTHOUSE } from './constants';
 import type { RoomAllocation, RoomMix, FixedCostConfig } from './types';
 import { computePricingTiers, computeFinancialSummary, totalHeadcount } from './utils/pricing';
 import HotelReference from './components/HotelReference';
@@ -19,36 +19,6 @@ const DEFAULT_MIX: RoomMix = {
   studio: BOOKABLE_STUDIO,
   penthouse: BOOKABLE_PENTHOUSE,
 };
-
-/**
- * Scale the existing allocation to fit the new mix limits — both directions.
- * - If current usage EXCEEDS the new mix limit: scale down proportionally.
- * - If current usage is BELOW the new mix limit: scale up proportionally,
- *   so that all committed rooms stay occupied when the mix changes.
- * - If current usage is 0 for a type: leave at 0 (nothing to scale from).
- */
-function scaleAllocationToMix(alloc: RoomAllocation, mix: RoomMix): RoomAllocation {
-  const result = { ...alloc };
-  result.studioKingSolo = 0;      // not offered
-  result.penthouse2person = 0;   // not offered
-
-  const studioUsed = alloc.studioKingShared + alloc.studioKing3person;
-  if (studioUsed > 0 && studioUsed !== mix.studio) {
-    const scale = mix.studio / studioUsed;
-    result.studioKingShared = Math.round(alloc.studioKingShared * scale);
-    result.studioKing3person = mix.studio - result.studioKingShared;
-  }
-
-  const penthouseUsed = alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
-  if (penthouseUsed > 0 && penthouseUsed !== mix.penthouse) {
-    const scale = mix.penthouse / penthouseUsed;
-    result.penthouse3person = Math.round(alloc.penthouse3person * scale);
-    result.penthouse4person = Math.round(alloc.penthouse4person * scale);
-    result.penthouse5person = mix.penthouse - result.penthouse3person - result.penthouse4person;
-  }
-
-  return result;
-}
 
 const DEFAULT_ALLOCATION: RoomAllocation = {
   studioKingSolo: DEFAULTS.studioKingSolo,
@@ -70,11 +40,6 @@ export default function App() {
   const [allocation, setAllocation] = useState<RoomAllocation>(DEFAULT_ALLOCATION);
   const [fixedConfig, setFixedConfig] = useState<FixedCostConfig>(DEFAULT_FIXED_CONFIG);
   const [roomMix, setRoomMix] = useState<RoomMix>(DEFAULT_MIX);
-
-  function handleMixChange(newMix: RoomMix) {
-    setRoomMix(newMix);
-    setAllocation(prev => scaleAllocationToMix(prev, newMix));
-  }
 
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);

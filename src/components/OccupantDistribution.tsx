@@ -98,7 +98,6 @@ export default function OccupantDistribution({ allocation, roomMix, onChange }: 
   const penthousePct = getPenthousePercentages(allocation, totalPenthouse);
 
   const handleStudioChange = (pct2: number) => {
-    const pct3 = 100 - pct2;
     const { shared, three } = studioFromPercentages(totalStudio, pct2);
     onChange({
       ...allocation,
