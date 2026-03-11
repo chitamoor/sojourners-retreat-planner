@@ -44,4 +44,8 @@ export interface FinancialSummary {
   accommodationsCost: number;
   meetingCost: number;
   tierBreakdown: PricingTier[];
+  /** Cost of 2 special-guest rooms (paid by group, spread across occupants). */
+  specialGuestRoomsCost: number;
+  /** Per-person share of special-guest rooms cost (added to tier price for total collected). */
+  surchargePerPerson: number;
 }

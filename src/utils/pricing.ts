@@ -50,24 +50,12 @@ export function penthouseRoomsUsed(alloc: RoomAllocation): number {
   return alloc.penthouse2person + alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
 }
 
-/** Build all pricing tiers from current config */
+/** Build pricing tiers from current config. Studio King Solo and Penthouse 2-person are not offered. */
 export function computePricingTiers(
   alloc: RoomAllocation,
   fixedConfig: FixedCostConfig
 ): PricingTier[] {
   const tiers: PricingTier[] = [
-    {
-      id: 'studio-solo',
-      label: 'Studio King — Solo',
-      roomType: 'studio',
-      occupants: 1,
-      roomCostPerPerson: roomCostPerPerson(STUDIO_RATE, 1),
-      fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      totalPerPerson: 0,
-      roomCount: alloc.studioKingSolo,
-      headcount: alloc.studioKingSolo * 1,
-      isBestValue: false,
-    },
     {
       id: 'studio-shared',
       label: 'Studio King — Shared',
@@ -90,18 +78,6 @@ export function computePricingTiers(
       totalPerPerson: 0,
       roomCount: alloc.studioKing3person,
       headcount: alloc.studioKing3person * 3,
-      isBestValue: false,
-    },
-    {
-      id: 'penthouse-2',
-      label: 'Penthouse — 2 People',
-      roomType: 'penthouse',
-      occupants: 2,
-      roomCostPerPerson: roomCostPerPerson(PENTHOUSE_RATE, 2),
-      fixedCostPerPerson: fixedConfig.retreatCostPerPerson,
-      totalPerPerson: 0,
-      roomCount: alloc.penthouse2person,
-      headcount: alloc.penthouse2person * 2,
       isBestValue: false,
     },
     {
@@ -159,13 +135,16 @@ export function computePricingTiers(
   return tiers;
 }
 
+/** Cost of the 2 special-guest rooms we pay for (1 studio + 1 penthouse); spread across all paying occupants. */
+export function specialGuestRoomsCost(): number {
+  return roomTotalCost(STUDIO_RATE) + roomTotalCost(PENTHOUSE_RATE);
+}
+
 /** Compute full financial summary.
  *
- * @param committedRooms  The total rooms committed to the hotel (studio + penthouse).
- *   When provided (from the main app), the hotel bill is based on ALL committed rooms
- *   regardless of how many have occupants assigned in the sliders — because the hotel
- *   charges for every contracted room. When absent (e.g. Recommendations scenarios where
- *   every room is fully allocated), falls back to the rooms used in the allocation.
+ * @param committedRooms  When provided (from the main app), the hotel bill uses these PAID room counts
+ *   (29 Studio + 30 Penthouse; 1 Studio is comp). Revenue includes base tier fees plus a per-person
+ *   surcharge for the 2 special-guest rooms. When absent, falls back to allocation-based billing.
  */
 export function computeFinancialSummary(
   alloc: RoomAllocation,
@@ -173,16 +152,19 @@ export function computeFinancialSummary(
   committedRooms?: { studio: number; penthouse: number }
 ): FinancialSummary {
   const tiers = computePricingTiers(alloc, fixedConfig);
-  const headcount = totalHeadcount(alloc); // paying adults only; children under 3 excluded
+  const headcount = totalHeadcount(alloc);
   const roomsUsed = totalRoomsUsed(alloc);
 
-  // Revenue from each tier (only rooms with allocations)
-  const totalRevenueCollected = tiers.reduce((sum, t) => {
+  // Base revenue from tier prices (room share + retreat cost)
+  const baseRevenue = tiers.reduce((sum, t) => {
     if (t.roomCount === 0) return sum;
     return sum + t.totalPerPerson * t.headcount;
   }, 0);
 
-  // Hotel bills for ALL committed rooms — unallocated rooms still cost money.
+  const specialGuestCost = specialGuestRoomsCost();
+  const surchargePerPerson = headcount > 0 ? specialGuestCost / headcount : 0;
+  const totalRevenueCollected = baseRevenue + surchargePerPerson * headcount;
+
   const billedStudio = committedRooms?.studio ?? studioRoomsUsed(alloc);
   const billedPenthouse = committedRooms?.penthouse ?? penthouseRoomsUsed(alloc);
   const totalCommitted = billedStudio + billedPenthouse;
@@ -211,6 +193,8 @@ export function computeFinancialSummary(
     accommodationsCost,
     meetingCost,
     tierBreakdown: tiers,
+    specialGuestRoomsCost: specialGuestCost,
+    surchargePerPerson,
   };
 }
 

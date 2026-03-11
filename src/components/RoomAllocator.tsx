@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CONTRACT, TOTAL_ROOMS } from '../constants';
+import { CONTRACT, BOOKABLE_TOTAL } from '../constants';
 import type { RoomAllocation, RoomMix } from '../types';
 import { studioRoomsUsed, penthouseRoomsUsed } from '../utils/pricing';
 
@@ -90,7 +90,7 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="text-sm font-semibold text-slate-700">Room Mix</h3>
-            <p className="text-xs text-slate-500">Split the 60 rooms between Studio King and Penthouse</p>
+            <p className="text-xs text-slate-500">Split the 57 bookable rooms between Studio King and Penthouse</p>
           </div>
           {mixChanged && (
             <div className="flex items-center gap-2">
@@ -111,13 +111,13 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
         <div className="flex rounded-lg overflow-hidden h-8 mb-3 text-xs font-semibold">
           <div
             className="bg-indigo-500 flex items-center justify-center text-white transition-all duration-200"
-            style={{ width: `${(roomMix.studio / TOTAL_ROOMS) * 100}%`, minWidth: roomMix.studio > 0 ? '2rem' : 0 }}
+            style={{ width: `${(roomMix.studio / BOOKABLE_TOTAL) * 100}%`, minWidth: roomMix.studio > 0 ? '2rem' : 0 }}
           >
             {roomMix.studio > 0 && `${roomMix.studio}`}
           </div>
           <div
             className="bg-violet-500 flex items-center justify-center text-white transition-all duration-200"
-            style={{ width: `${(roomMix.penthouse / TOTAL_ROOMS) * 100}%`, minWidth: roomMix.penthouse > 0 ? '2rem' : 0 }}
+            style={{ width: `${(roomMix.penthouse / BOOKABLE_TOTAL) * 100}%`, minWidth: roomMix.penthouse > 0 ? '2rem' : 0 }}
           >
             {roomMix.penthouse > 0 && `${roomMix.penthouse}`}
           </div>
@@ -130,11 +130,11 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
           <input
             type="range"
             min={0}
-            max={TOTAL_ROOMS}
+            max={BOOKABLE_TOTAL}
             value={roomMix.studio}
             onChange={e => {
               const studio = Number(e.target.value);
-              onMixChange({ studio, penthouse: TOTAL_ROOMS - studio });
+              onMixChange({ studio, penthouse: BOOKABLE_TOTAL - studio });
             }}
             className="flex-1 accent-indigo-500"
           />
@@ -175,16 +175,8 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
               {studioUsed} / {studioMax} rooms
             </span>
           </div>
-          <p className="text-xs text-slate-500 mb-4">1 king bed + sofa bed · max 3 occupants</p>
+          <p className="text-xs text-slate-500 mb-4">1 king bed + sofa bed · 2 or 3 occupants only (solo not offered)</p>
 
-          <SliderRow
-            label="Solo (1 person per room)"
-            value={allocation.studioKingSolo}
-            max={studioMax}
-            onChange={v => set('studioKingSolo', v)}
-            color="indigo"
-            note="Private room — highest per-person cost"
-          />
           <SliderRow
             label="Shared (2 people, 1 king bed)"
             value={allocation.studioKingShared}
@@ -219,16 +211,8 @@ export default function RoomAllocator({ allocation, roomMix, onChange, onMixChan
               {penthouseUsed} / {penthouseMax} rooms
             </span>
           </div>
-          <p className="text-xs text-slate-500 mb-4">2 queen beds + loft · max 5 occupants</p>
+          <p className="text-xs text-slate-500 mb-4">2 queen beds + loft · 3, 4, or 5 occupants only (2-person not offered)</p>
 
-          <SliderRow
-            label="2 people (separate queen beds)"
-            value={allocation.penthouse2person}
-            max={penthouseMax}
-            onChange={v => set('penthouse2person', v)}
-            color="violet"
-            note="Couple or friends wanting privacy"
-          />
           <SliderRow
             label="3 people"
             value={allocation.penthouse3person}

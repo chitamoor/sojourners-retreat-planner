@@ -1,22 +1,23 @@
 import { useState, useMemo, useCallback } from 'react';
-import { DEFAULTS, CONTRACT } from './constants';
+import { DEFAULTS, CONTRACT, BOOKABLE_STUDIO, BOOKABLE_PENTHOUSE, BOOKABLE_TOTAL, PAID_STUDIO, PAID_PENTHOUSE } from './constants';
 import type { RoomAllocation, RoomMix, FixedCostConfig } from './types';
 import { computePricingTiers, computeFinancialSummary, totalHeadcount } from './utils/pricing';
 import HotelReference from './components/HotelReference';
-import RoomAllocator from './components/RoomAllocator';
 import FixedCosts from './components/FixedCosts';
 import PricingTiers from './components/PricingTiers';
 import FinancialSummary from './components/FinancialSummary';
 import PasswordGate from './components/PasswordGate';
 import Recommendations from './components/Recommendations';
+import OccupantDistribution from './components/OccupantDistribution';
+import AssumptionsSection from './components/AssumptionsSection';
 import CurrentMix from './components/CurrentMix';
 import { exportToPdf } from './utils/exportPdf';
 
 const AUTH_ENABLED = !!(import.meta.env.VITE_APP_USERNAME && import.meta.env.VITE_APP_PASSWORD);
 
 const DEFAULT_MIX: RoomMix = {
-  studio: CONTRACT.rooms.studioKing.total,
-  penthouse: CONTRACT.rooms.penthouse.total,
+  studio: BOOKABLE_STUDIO,
+  penthouse: BOOKABLE_PENTHOUSE,
 };
 
 /**
@@ -28,22 +29,22 @@ const DEFAULT_MIX: RoomMix = {
  */
 function scaleAllocationToMix(alloc: RoomAllocation, mix: RoomMix): RoomAllocation {
   const result = { ...alloc };
+  result.studioKingSolo = 0;      // not offered
+  result.penthouse2person = 0;   // not offered
 
-  const studioUsed = alloc.studioKingSolo + alloc.studioKingShared + alloc.studioKing3person;
+  const studioUsed = alloc.studioKingShared + alloc.studioKing3person;
   if (studioUsed > 0 && studioUsed !== mix.studio) {
     const scale = mix.studio / studioUsed;
-    result.studioKingSolo = Math.round(alloc.studioKingSolo * scale);
     result.studioKingShared = Math.round(alloc.studioKingShared * scale);
-    result.studioKing3person = mix.studio - result.studioKingSolo - result.studioKingShared;
+    result.studioKing3person = mix.studio - result.studioKingShared;
   }
 
-  const penthouseUsed = alloc.penthouse2person + alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
+  const penthouseUsed = alloc.penthouse3person + alloc.penthouse4person + alloc.penthouse5person;
   if (penthouseUsed > 0 && penthouseUsed !== mix.penthouse) {
     const scale = mix.penthouse / penthouseUsed;
-    result.penthouse2person = Math.round(alloc.penthouse2person * scale);
     result.penthouse3person = Math.round(alloc.penthouse3person * scale);
     result.penthouse4person = Math.round(alloc.penthouse4person * scale);
-    result.penthouse5person = mix.penthouse - result.penthouse2person - result.penthouse3person - result.penthouse4person;
+    result.penthouse5person = mix.penthouse - result.penthouse3person - result.penthouse4person;
   }
 
   return result;
@@ -80,7 +81,10 @@ export default function App() {
 
   const headcount = useMemo(() => totalHeadcount(allocation), [allocation]);
   const tiers = useMemo(() => computePricingTiers(allocation, fixedConfig), [allocation, fixedConfig]);
-  const summary = useMemo(() => computeFinancialSummary(allocation, fixedConfig, roomMix), [allocation, fixedConfig, roomMix]);
+  const summary = useMemo(
+    () => computeFinancialSummary(allocation, fixedConfig, { studio: PAID_STUDIO, penthouse: PAID_PENTHOUSE }),
+    [allocation, fixedConfig]
+  );
 
   if (!unlocked) {
     return <PasswordGate onUnlock={() => setUnlocked(true)} />;
@@ -124,7 +128,7 @@ export default function App() {
             <div className="hidden sm:flex items-center gap-4 text-sm">
               <HeadlineStat label="Headcount" value={headcount.toString()} />
               <div className="w-px h-8 bg-slate-200" />
-              <HeadlineStat label="Rooms Used" value={`${summary.totalRoomsUsed} / 60`} />
+              <HeadlineStat label="Rooms Used" value={`${summary.totalRoomsUsed} / ${BOOKABLE_TOTAL}`} />
             </div>
             <button
               onClick={handleExport}
@@ -168,17 +172,17 @@ export default function App() {
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <HotelReference roomMix={roomMix} summary={summary} />
+        <AssumptionsSection />
         <Recommendations
           fixedConfig={fixedConfig}
           currentAllocation={allocation}
           roomMix={roomMix}
           onApply={setAllocation}
         />
-        <RoomAllocator
+        <OccupantDistribution
           allocation={allocation}
           roomMix={roomMix}
           onChange={setAllocation}
-          onMixChange={handleMixChange}
         />
         <CurrentMix tiers={tiers} />
         <FixedCosts

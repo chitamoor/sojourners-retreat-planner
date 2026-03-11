@@ -13,14 +13,14 @@ export const CONTRACT = {
   rooms: {
     studioKing: {
       label: 'Studio King Suite',
-      total: 45,
+      total: 30,
       ratePerNight: 169,
       description: '1 king bed + sofa bed, full kitchen',
       maxOccupancy: 3,
     },
     penthouse: {
       label: 'Penthouse Suite',
-      total: 15,
+      total: 30,
       ratePerNight: 249,
       description: '2 queen beds + loft, 2 bathrooms, full kitchen',
       maxOccupancy: 5,
@@ -49,18 +49,27 @@ export const CONTRACT = {
   },
 
   accommodations: {
-    // Pre-calculated from estimates.pdf
-    subtotalBeforeTax: 22680,
-    totalWithTax: 25899.43,
+    // Pre-calculated: 29 Studio + 30 Penthouse paid (1 Studio comp), 2 nights, with tax
+    subtotalBeforeTax: 24742,   // 29×169×2 + 30×249×2
+    totalWithTax: 28246.72,     // subtotal × (1 + taxes.total)
   },
 
-  grandTotal: 31807.66,
+  grandTotal: 34154.96,         // accommodations.totalWithTax + meetingRooms.totalEstimated
 
   attritionThreshold: 0.80, // Hotel requires 80% room usage or attrition fees apply
 } as const;
 
 export const TOTAL_ROOMS =
-  45 + 15; // 60 committed rooms — Studio King + Penthouse
+  30 + 30; // 60 contracted — Studio King + Penthouse
+
+/** Bookable rooms for paying participants (3 reserved for special guests, not charged to them). */
+export const BOOKABLE_STUDIO = 28;
+export const BOOKABLE_PENTHOUSE = 29;
+export const BOOKABLE_TOTAL = BOOKABLE_STUDIO + BOOKABLE_PENTHOUSE; // 57
+
+/** Rooms we pay the hotel for: 1 Studio is complimentary from the hotel; we pay for 29 Studio + 30 Penthouse = 59. */
+export const PAID_STUDIO = 29;
+export const PAID_PENTHOUSE = 30;
 
 export const DEFAULTS = {
   fixedCostPerPerson: 60,    // midpoint of $50–$70 range
@@ -69,12 +78,12 @@ export const DEFAULTS = {
   expectedAttendees: 250,
   childrenUnder3: 0,
 
-  // Default room allocation split
-  studioKingSolo: 5,
-  studioKingShared: 35,
-  studioKing3person: 5,
-  penthouse2person: 2,
-  penthouse3person: 3,
-  penthouse4person: 8,
-  penthouse5person: 2,
+  // Default room allocation split (28 studio + 29 penthouse bookable). Solo and Penthouse 2-person not offered.
+  studioKingSolo: 0,
+  studioKingShared: 18,
+  studioKing3person: 10,
+  penthouse2person: 0,
+  penthouse3person: 5,
+  penthouse4person: 14,
+  penthouse5person: 10,
 } as const;

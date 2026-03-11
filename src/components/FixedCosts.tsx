@@ -23,14 +23,14 @@ export default function FixedCosts({ config, onChange }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="max-w-md">
         {/* Retreat cost per person */}
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
           <label className="block text-sm font-semibold text-slate-700 mb-1">
             Retreat Program Cost
           </label>
           <p className="text-xs text-slate-500 mb-3">
-            Per paying attendee · children &lt; 3 yrs exempt
+            Per paying attendee
           </p>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-xs text-slate-400">{fmt(DEFAULTS.fixedCostMin)}</span>
@@ -61,35 +61,6 @@ export default function FixedCosts({ config, onChange }: Props) {
             ))}
           </div>
         </div>
-
-        {/* Children under 3 */}
-        <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-          <label className="block text-sm font-semibold text-slate-700 mb-1">
-            Children Under 3 Years
-          </label>
-          <p className="text-xs text-slate-500 mb-3">
-            Attending free · not counted in any cost calculation
-          </p>
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => set('childrenUnder3', Math.max(0, config.childrenUnder3 - 1))}
-              className="w-10 h-10 rounded-full bg-green-200 hover:bg-green-300 text-green-800 text-xl font-bold flex items-center justify-center transition-colors"
-              disabled={config.childrenUnder3 <= 0}
-            >−</button>
-            <div className="text-center">
-              <span className="text-4xl font-bold text-green-700">{config.childrenUnder3}</span>
-              <p className="text-xs text-slate-400 mt-1">children</p>
-            </div>
-            <button
-              onClick={() => set('childrenUnder3', config.childrenUnder3 + 1)}
-              className="w-10 h-10 rounded-full bg-green-200 hover:bg-green-300 text-green-800 text-xl font-bold flex items-center justify-center transition-colors"
-            >+</button>
-          </div>
-          <p className="text-xs text-emerald-600 font-medium mt-3 text-center">
-            $0.00 — completely free
-          </p>
-        </div>
-
       </div>
     </div>
   );

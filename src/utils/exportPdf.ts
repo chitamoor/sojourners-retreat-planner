@@ -64,8 +64,8 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
   pdf.setFont('helvetica', 'bold');
   pdf.text('Room Mix', M + 4, y + 6);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${roomMix.studio} Studio King Suites  ·  ${roomMix.penthouse} Penthouse Suites  ·  ${roomMix.studio + roomMix.penthouse} Total Rooms`, M + 4, y + 12);
-  pdf.text(`Fixed retreat cost: ${fmt(fixedConfig.retreatCostPerPerson)}/person  ·  Children under 3: ${fixedConfig.childrenUnder3} (free)`, M + 4, y + 17);
+  pdf.text(`${roomMix.studio} Studio King  ·  ${roomMix.penthouse} Penthouse  ·  ${roomMix.studio + roomMix.penthouse} bookable (57).  3 rooms reserved for special guests; 1 comp, 2 paid by group.`, M + 4, y + 12);
+  pdf.text(`Fixed retreat cost: ${fmt(fixedConfig.retreatCostPerPerson)}/person  ·  Special guest share: ${summary.surchargePerPerson > 0 ? fmt(summary.surchargePerPerson) + '/person' : '—'}`, M + 4, y + 17);
   y += 23;
 
   const cols: number[] = [60, 28, 22, 28, 28, 32];
@@ -109,8 +109,8 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
   const hasSurplus = summary.surplus >= 0;
   const statBoxes = [
     { label: 'Total Headcount', value: String(summary.totalHeadcount + summary.childrenUnder3), sub: `${summary.totalHeadcount} paying + ${summary.childrenUnder3} children` },
-    { label: 'Rooms Used', value: `${summary.totalRoomsUsed} / ${summary.totalRoomsCommitted}`, sub: summary.attritionRisk ? 'Below 48 room minimum' : 'Attrition safe' },
-    { label: 'Fees Collected', value: fmt(summary.totalRevenueCollected), sub: 'From all attendees' },
+    { label: 'Rooms Used', value: `${summary.totalRoomsUsed} / ${summary.totalRoomsCommitted}`, sub: summary.attritionRisk ? 'Below room minimum' : 'Attrition safe' },
+    { label: 'Fees Collected', value: fmt(summary.totalRevenueCollected), sub: summary.surchargePerPerson > 0 ? `Includes ${fmt(summary.surchargePerPerson)}/person special-guest share` : 'From all attendees' },
     { label: hasSurplus ? 'Surplus' : 'Deficit', value: fmt(Math.abs(summary.surplus)), sub: hasSurplus ? 'Above break-even' : 'Below break-even' },
   ];
 

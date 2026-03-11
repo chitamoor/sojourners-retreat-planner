@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CONTRACT } from '../constants';
+import { CONTRACT, PAID_STUDIO, PAID_PENTHOUSE } from '../constants';
 import type { RoomAllocation, RoomMix, FixedCostConfig, FinancialSummary } from '../types';
 import { computePricingTiers, computeFinancialSummary, fmt, totalHeadcount } from '../utils/pricing';
 
@@ -26,17 +26,17 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'max-capacity',
     name: 'Maximum Capacity',
-    description: 'Every room filled to maximum occupancy. Achieves the highest headcount possible with 60 rooms. All prices fall within the target range.',
+    description: 'Every bookable room filled to maximum occupancy. Achieves the highest headcount possible with 57 rooms. All prices fall within the target range.',
     tag: 'Most People',
     tagColor: 'bg-emerald-100 text-emerald-700',
     allocation: {
       studioKingSolo: 0,
       studioKingShared: 0,
-      studioKing3person: 45,
+      studioKing3person: 28,
       penthouse2person: 0,
       penthouse3person: 0,
       penthouse4person: 0,
-      penthouse5person: 15,
+      penthouse5person: 29,
     },
   },
   {
@@ -47,12 +47,12 @@ const SCENARIOS: Scenario[] = [
     tagColor: 'bg-indigo-100 text-indigo-700',
     allocation: {
       studioKingSolo: 0,
-      studioKingShared: 15,
-      studioKing3person: 30,
+      studioKingShared: 9,
+      studioKing3person: 19,
       penthouse2person: 0,
       penthouse3person: 0,
-      penthouse4person: 5,
-      penthouse5person: 10,
+      penthouse4person: 10,
+      penthouse5person: 19,
     },
   },
   {
@@ -63,12 +63,12 @@ const SCENARIOS: Scenario[] = [
     tagColor: 'bg-amber-100 text-amber-700',
     allocation: {
       studioKingSolo: 0,
-      studioKingShared: 5,
-      studioKing3person: 40,
+      studioKingShared: 3,
+      studioKing3person: 25,
       penthouse2person: 0,
       penthouse3person: 0,
-      penthouse4person: 3,
-      penthouse5person: 12,
+      penthouse4person: 6,
+      penthouse5person: 23,
     },
   },
   {
@@ -78,13 +78,13 @@ const SCENARIOS: Scenario[] = [
     tag: 'More Private',
     tagColor: 'bg-violet-100 text-violet-700',
     allocation: {
-      studioKingSolo: 10,
-      studioKingShared: 25,
-      studioKing3person: 10,
-      penthouse2person: 2,
-      penthouse3person: 3,
-      penthouse4person: 5,
-      penthouse5person: 5,
+      studioKingSolo: 0,
+      studioKingShared: 16,
+      studioKing3person: 12,
+      penthouse2person: 0,
+      penthouse3person: 6,
+      penthouse4person: 10,
+      penthouse5person: 13,
     },
   },
 ];
@@ -118,10 +118,10 @@ const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
     icon: '🏨',
     tag: 'No Negotiation',
     tagColor: 'bg-emerald-100 text-emerald-700',
-    description: 'All 60 rooms at absolute maximum occupancy. Everyone shares — studios pack to 3, penthouses to 5. Lowest possible cost per person.',
+    description: 'All 57 bookable rooms at absolute maximum occupancy. Everyone shares — studios pack to 3, penthouses to 5. Lowest possible cost per person.',
     allocation: {
-      studioKingSolo: 0, studioKingShared: 0, studioKing3person: 45,
-      penthouse2person: 0, penthouse3person: 0, penthouse4person: 0, penthouse5person: 15,
+      studioKingSolo: 0, studioKingShared: 0, studioKing3person: 28,
+      penthouse2person: 0, penthouse3person: 0, penthouse4person: 0, penthouse5person: 29,
     },
     extraRooms: 0,
     insight: 'Best case financially. Requires everyone to be comfortable sharing beds and rooms with non-family members.',
@@ -132,10 +132,10 @@ const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
     icon: '🤝',
     tag: 'Negotiate with Hotel',
     tagColor: 'bg-amber-100 text-amber-700',
-    description: 'Add 8 extra penthouses (subject to hotel availability) on top of all 60 rooms at max occupancy. Hits the 250-guest target.',
+    description: 'Add 8 extra penthouses (subject to hotel availability) on top of 57 bookable rooms at max occupancy. Hits the 250-guest target.',
     allocation: {
-      studioKingSolo: 0, studioKingShared: 0, studioKing3person: 45,
-      penthouse2person: 0, penthouse3person: 0, penthouse4person: 0, penthouse5person: 23,
+      studioKingSolo: 0, studioKingShared: 0, studioKing3person: 28,
+      penthouse2person: 0, penthouse3person: 0, penthouse4person: 0, penthouse5person: 37,
     },
     extraRooms: 8,
     insight: 'Requires hotel to have 8 extra penthouses. Adds ~$4,500 to the hotel bill but per-person prices stay the same.',
@@ -146,13 +146,13 @@ const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
     icon: '🛏️',
     tag: 'High Privacy',
     tagColor: 'bg-violet-100 text-violet-700',
-    description: 'Most people get their own bed or share only with a spouse/partner. Solo studios + shared-2 dominate. Ideal if congregation skews older.',
+    description: 'Most people share only with a spouse/partner. Shared studios and 3-person penthouses. Ideal if congregation skews older.',
     allocation: {
-      studioKingSolo: 20, studioKingShared: 20, studioKing3person: 5,
-      penthouse2person: 10, penthouse3person: 5, penthouse4person: 0, penthouse5person: 0,
+      studioKingSolo: 0, studioKingShared: 25, studioKing3person: 3,
+      penthouse2person: 0, penthouse3person: 29, penthouse4person: 0, penthouse5person: 0,
     },
     extraRooms: 0,
-    insight: 'Only ~110 attendees from 60 rooms. Higher per-person cost. Will likely need to limit registration or have the church subsidize room costs.',
+    insight: 'Only ~110 attendees from 57 rooms. Higher per-person cost. Will likely need to limit registration or have the church subsidize room costs.',
   },
   {
     id: 'family-groups',
@@ -162,11 +162,11 @@ const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
     tagColor: 'bg-indigo-100 text-indigo-700',
     description: 'Families share full penthouses; friend groups share studio sofa beds. Good balance of privacy and capacity for a mixed-age congregation.',
     allocation: {
-      studioKingSolo: 0, studioKingShared: 15, studioKing3person: 30,
-      penthouse2person: 0, penthouse3person: 3, penthouse4person: 7, penthouse5person: 5,
+      studioKingSolo: 0, studioKingShared: 9, studioKing3person: 19,
+      penthouse2person: 0, penthouse3person: 6, penthouse4person: 13, penthouse5person: 10,
     },
     extraRooms: 0,
-    insight: '~182 guests from 60 rooms. Families keep penthouses to themselves; couples or friend pairs share studios.',
+    insight: '~182 guests from 57 rooms. Families keep penthouses to themselves; couples or friend pairs share studios.',
   },
   {
     id: 'limit-private',
@@ -174,10 +174,10 @@ const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
     icon: '✨',
     tag: 'Limit Registration',
     tagColor: 'bg-rose-100 text-rose-700',
-    description: 'Intentionally limit attendance to ~120 guests. Most people get their own bed or share only with their spouse. A smaller, more intimate retreat.',
+    description: 'Intentionally limit attendance to ~120 guests. Most people share only with their spouse. A smaller, more intimate retreat.',
     allocation: {
-      studioKingSolo: 15, studioKingShared: 25, studioKing3person: 5,
-      penthouse2person: 8, penthouse3person: 4, penthouse4person: 3, penthouse5person: 0,
+      studioKingSolo: 0, studioKingShared: 26, studioKing3person: 2,
+      penthouse2person: 0, penthouse3person: 13, penthouse4person: 16, penthouse5person: 0,
     },
     extraRooms: 0,
     insight: 'Most comfortable option. Higher per-person cost due to less sharing. Requires strict registration cap — consider a waitlist.',
@@ -190,11 +190,11 @@ const PLANNING_SCENARIO_CONFIGS: PlanningScenarioConfig[] = [
     tagColor: 'bg-sky-100 text-sky-700',
     description: 'Negotiate just 5 extra penthouses while keeping existing rooms at a comfortable (not max) occupancy. Middle ground for groups and seniors.',
     allocation: {
-      studioKingSolo: 5, studioKingShared: 20, studioKing3person: 20,
-      penthouse2person: 0, penthouse3person: 3, penthouse4person: 5, penthouse5person: 12,
+      studioKingSolo: 0, studioKingShared: 15, studioKing3person: 13,
+      penthouse2person: 0, penthouse3person: 5, penthouse4person: 9, penthouse5person: 15,
     },
     extraRooms: 5,
-    insight: '~194 guests with a comfortable mix. Less aggressive than negotiating 8 rooms, more capacity than 60 rooms alone.',
+    insight: '~194 guests with a comfortable mix. Less aggressive than negotiating 8 rooms, more capacity than 57 rooms alone.',
   },
 ];
 
@@ -202,7 +202,7 @@ function PlanningScenarios({ fixedConfig }: { fixedConfig: FixedCostConfig }) {
   const metrics = useMemo<PlanningScenarioMetrics[]>(() =>
     PLANNING_SCENARIO_CONFIGS.map(s => {
       const tiers = computePricingTiers(s.allocation, fixedConfig);
-      const summary = computeFinancialSummary(s.allocation, fixedConfig);
+      const summary = computeFinancialSummary(s.allocation, fixedConfig, { studio: PAID_STUDIO, penthouse: PAID_PENTHOUSE });
       const active = tiers.filter(t => t.roomCount > 0);
       return {
         ...s,
@@ -407,11 +407,11 @@ export default function Recommendations({ fixedConfig, currentAllocation, roomMi
 // ─── Price Range Guide ────────────────────────────────────────────────────────
 
 function PriceRangeGuide({ fixedConfig }: { fixedConfig: FixedCostConfig }) {
-  // Use a "full allocation" to generate prices for all 7 tiers
+  // Tiers are only the 5 offered options (no Studio Solo, no Penthouse 2-person)
   const allActiveTiers = useMemo(() => {
     const dummyAlloc: RoomAllocation = {
-      studioKingSolo: 1, studioKingShared: 1, studioKing3person: 1,
-      penthouse2person: 1, penthouse3person: 1, penthouse4person: 1, penthouse5person: 1,
+      studioKingSolo: 0, studioKingShared: 1, studioKing3person: 1,
+      penthouse2person: 0, penthouse3person: 1, penthouse4person: 1, penthouse5person: 1,
     };
     return computePricingTiers(dummyAlloc, fixedConfig);
   }, [fixedConfig]);

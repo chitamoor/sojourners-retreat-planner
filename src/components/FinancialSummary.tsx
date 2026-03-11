@@ -20,18 +20,26 @@ export default function FinancialSummary({ summary }: Props) {
     accommodationsCost,
     meetingCost,
     tierBreakdown,
+    specialGuestRoomsCost,
+    surchargePerPerson,
   } = summary;
 
   const hasSurplus = surplus >= 0;
   const attritionMin = Math.ceil(totalRoomsCommitted * 0.8);
 
-  // Revenue breakdown pie data
+  // Revenue breakdown pie data (base tier revenue + special guest surcharge as separate slice if present)
   const revenuePie = tierBreakdown
     .filter(t => t.roomCount > 0 && t.headcount > 0)
     .map(t => ({
       name: t.label,
       value: parseFloat((t.totalPerPerson * t.headcount).toFixed(2)),
     }));
+  if (surchargePerPerson > 0 && totalHeadcount > 0) {
+    revenuePie.push({
+      name: 'Special guest rooms share',
+      value: parseFloat((specialGuestRoomsCost).toFixed(2)),
+    });
+  }
 
   const PIE_COLORS = ['#6366f1', '#7c3aed', '#8b5cf6', '#a78bfa', '#c4b5fd'];
 
@@ -77,7 +85,7 @@ export default function FinancialSummary({ summary }: Props) {
           <StatCard
             label="Total Collected"
             value={fmt(totalRevenueCollected)}
-            sub="From all attendees"
+            sub={surchargePerPerson > 0 ? `Includes ${fmt(surchargePerPerson)}/person for 2 special-guest rooms` : 'From all attendees'}
             color="indigo"
           />
           <StatCard
@@ -87,6 +95,13 @@ export default function FinancialSummary({ summary }: Props) {
             color={hasSurplus ? 'emerald' : 'red'}
           />
         </div>
+
+        {/* Special guest rooms note */}
+        {surchargePerPerson > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 mb-4 text-sm text-amber-800">
+            <strong>Special guest rooms:</strong> 3 rooms reserved (not charged to guests). 1 room is complimentary from the hotel; the cost of the other 2 rooms ({fmt(specialGuestRoomsCost)}) is shared by all paying attendees ({fmt(surchargePerPerson)}/person).
+          </div>
+        )}
 
         {/* Cost breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -211,6 +226,15 @@ export default function FinancialSummary({ summary }: Props) {
                         <td className="py-2 text-right text-slate-600">{fmt(t.totalPerPerson * t.headcount)}</td>
                       </tr>
                     ))}
+                  {surchargePerPerson > 0 && totalHeadcount > 0 && (
+                    <tr className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="py-2 text-slate-600">Special guest rooms share</td>
+                      <td className="py-2 text-right text-slate-400">—</td>
+                      <td className="py-2 text-right text-slate-500">{totalHeadcount}</td>
+                      <td className="py-2 text-right font-semibold text-slate-700">{fmt(surchargePerPerson)}</td>
+                      <td className="py-2 text-right text-slate-600">{fmt(specialGuestRoomsCost)}</td>
+                    </tr>
+                  )}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-slate-200 font-semibold">
