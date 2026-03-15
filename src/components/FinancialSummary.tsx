@@ -88,11 +88,12 @@ export default function FinancialSummary({ summary }: Props) {
             sub={surchargePerPerson > 0 ? `Includes ${fmt(surchargePerPerson)}/person for 2 special-guest rooms` : 'From all attendees'}
             color="indigo"
           />
-          <StatCard
-            label={hasSurplus ? 'Surplus' : 'Deficit'}
-            value={fmt(Math.abs(surplus))}
-            sub={hasSurplus ? 'Above break-even' : 'Below break-even'}
-            color={hasSurplus ? 'emerald' : 'red'}
+          <SurplusCard
+            surplus={surplus}
+            totalRevenueCollected={totalRevenueCollected}
+            totalHotelBill={totalHotelBill}
+            accommodationsCost={accommodationsCost}
+            meetingCost={meetingCost}
           />
         </div>
 
@@ -275,6 +276,63 @@ function StatCard({ label, value, sub, color }: StatCardProps) {
       <p className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-1">{label}</p>
       <p className="text-2xl font-bold">{value}</p>
       <p className="text-xs mt-1 opacity-70">{sub}</p>
+    </div>
+  );
+}
+
+interface SurplusCardProps {
+  surplus: number;
+  totalRevenueCollected: number;
+  totalHotelBill: number;
+  accommodationsCost: number;
+  meetingCost: number;
+}
+
+function SurplusCard({
+  surplus,
+  totalRevenueCollected,
+  totalHotelBill,
+  accommodationsCost,
+  meetingCost,
+}: SurplusCardProps) {
+  const hasSurplus = surplus >= 0;
+  return (
+    <div className={`relative group rounded-xl border p-4 cursor-help ${hasSurplus ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+      <p className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-1">
+        {hasSurplus ? 'Surplus' : 'Deficit'}
+        <span className="ml-1.5 inline-block text-slate-400 opacity-70 group-hover:opacity-100" aria-hidden>ⓘ</span>
+      </p>
+      <p className="text-2xl font-bold">{hasSurplus ? '+' : '−'}{fmt(Math.abs(surplus))}</p>
+      <p className="text-xs mt-1 opacity-70">{hasSurplus ? 'Above break-even' : 'Below break-even'}</p>
+      {/* Hover: how surplus is calculated */}
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-xl bg-slate-800 px-3 py-2.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100">
+        <p className="font-semibold text-slate-100 mb-2">How surplus is calculated</p>
+        <div className="space-y-1 font-mono">
+          <div className="flex justify-between gap-3">
+            <span className="text-slate-300">Total fees collected</span>
+            <span className="shrink-0">{fmt(totalRevenueCollected)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-slate-400">
+            <span>− Total hotel bill</span>
+            <span className="shrink-0">{fmt(totalHotelBill)}</span>
+          </div>
+          <div className="pl-2 border-l border-slate-600 text-slate-400">
+            <div className="flex justify-between gap-3">
+              <span>Accommodations</span>
+              <span className="shrink-0">{fmt(accommodationsCost)}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>Meeting rooms</span>
+              <span className="shrink-0">{fmt(meetingCost)}</span>
+            </div>
+          </div>
+          <div className="border-t border-slate-600 pt-1.5 mt-1.5 flex justify-between gap-3 font-semibold text-white">
+            <span>= Surplus</span>
+            <span className="shrink-0">{surplus >= 0 ? '+' : ''}{fmt(surplus)}</span>
+          </div>
+        </div>
+        <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+      </div>
     </div>
   );
 }

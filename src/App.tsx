@@ -33,6 +33,8 @@ const DEFAULT_ALLOCATION: RoomAllocation = {
 const DEFAULT_FIXED_CONFIG: FixedCostConfig = {
   retreatCostPerPerson: DEFAULTS.fixedCostPerPerson,
   childrenUnder3: DEFAULTS.childrenUnder3,
+  earlyBirdHeadcount: DEFAULTS.earlyBirdHeadcount,
+  earlyBirdDiscountPerPerson: DEFAULTS.earlyBirdDiscountPerPerson,
 };
 
 export default function App() {
@@ -153,8 +155,9 @@ export default function App() {
         <FixedCosts
           config={fixedConfig}
           onChange={setFixedConfig}
+          maxHeadcount={headcount}
         />
-        <PricingTiers tiers={tiers} />
+        <PricingTiers tiers={tiers} earlyBirdHeadcount={fixedConfig.earlyBirdHeadcount} />
         <FinancialSummary summary={summary} />
       </main>
 

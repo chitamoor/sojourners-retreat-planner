@@ -16,6 +16,9 @@ export interface RoomAllocation {
 export interface FixedCostConfig {
   retreatCostPerPerson: number; // $50–$70 program/operational cost
   childrenUnder3: number;       // informational only — attend free, no cost impact
+  earlyBirdHeadcount: number;   // registrations that get the early bird discount
+  /** Early bird discount per person ($25–$75 off regular price). */
+  earlyBirdDiscountPerPerson: number;
 }
 
 export interface PricingTier {
@@ -23,12 +26,16 @@ export interface PricingTier {
   label: string;
   roomType: 'studio' | 'penthouse';
   occupants: number;
-  roomCostPerPerson: number;    // room + tax share per person
+  roomCostPerPerson: number;    // room + tax share per person (regular)
   fixedCostPerPerson: number;   // retreat program cost
-  totalPerPerson: number;       // room + fixed
+  totalPerPerson: number;       // room + fixed (regular)
   roomCount: number;            // how many rooms in this tier
   headcount: number;            // total people in this tier
   isBestValue: boolean;
+  /** Room component of early bird price (total − discount − retreat). */
+  earlyBirdRoomCostPerPerson: number;
+  /** Regular total minus early bird discount (early bird price). */
+  earlyBirdTotalPerPerson: number;
 }
 
 export interface FinancialSummary {

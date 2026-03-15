@@ -67,9 +67,16 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
   pdf.text(`${roomMix.studio} Studio King  ·  ${roomMix.penthouse} Penthouse  ·  ${roomMix.studio + roomMix.penthouse} bookable (57).  3 rooms reserved for special guests; 1 comp, 2 paid by group.`, M + 4, y + 12);
   pdf.text(`Fixed retreat cost: ${fmt(fixedConfig.retreatCostPerPerson)}/person  ·  Special guest share: ${summary.surchargePerPerson > 0 ? fmt(summary.surchargePerPerson) + '/person' : '—'}`, M + 4, y + 17);
   y += 23;
+  if (fixedConfig.earlyBirdHeadcount > 0) {
+    pdf.text(`Early bird: ${fixedConfig.earlyBirdHeadcount} registrations (${fmt(fixedConfig.earlyBirdDiscountPerPerson)}/person discount).`, M + 4, y);
+    y += 6;
+  }
 
-  const cols: number[] = [60, 28, 22, 28, 28, 32];
-  const headers = ['Tier', 'Rooms', 'People', 'Room Cost', 'Retreat', 'Total/Person'];
+  const showEarlyBirdCol = fixedConfig.earlyBirdHeadcount > 0;
+  const cols: number[] = showEarlyBirdCol ? [48, 22, 16, 22, 22, 24, 26] : [60, 28, 22, 28, 28, 32];
+  const headers = showEarlyBirdCol
+    ? ['Tier', 'Rooms', 'People', 'Room', 'Retreat', 'Early bird', 'Regular']
+    : ['Tier', 'Rooms', 'People', 'Room Cost', 'Retreat', 'Total/Person'];
   tableHeader(pdf, headers, cols, M, y, CW);
   y += 7;
 
@@ -82,17 +89,27 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
     tc(pdf, SLATE);
     pdf.setFontSize(8.5);
     pdf.setFont('helvetica', tier.isBestValue ? 'bold' : 'normal');
-    const vals = [
-      tier.label + (tier.isBestValue ? ' \u2605' : ''),
-      String(tier.roomCount),
-      String(tier.headcount),
-      fmt(tier.roomCostPerPerson),
-      fmt(tier.fixedCostPerPerson),
-      fmt(tier.totalPerPerson),
-    ];
+    const vals = showEarlyBirdCol
+      ? [
+          tier.label + (tier.isBestValue ? ' \u2605' : ''),
+          String(tier.roomCount),
+          String(tier.headcount),
+          fmt(tier.roomCostPerPerson),
+          fmt(tier.fixedCostPerPerson),
+          fmt(tier.earlyBirdTotalPerPerson),
+          fmt(tier.totalPerPerson),
+        ]
+      : [
+          tier.label + (tier.isBestValue ? ' \u2605' : ''),
+          String(tier.roomCount),
+          String(tier.headcount),
+          fmt(tier.roomCostPerPerson),
+          fmt(tier.fixedCostPerPerson),
+          fmt(tier.totalPerPerson),
+        ];
     let x = M;
     vals.forEach((v, ci) => {
-      pdf.text(v, x + 2, y);
+      pdf.text(String(v), x + 2, y);
       x += cols[ci];
     });
     y += 7;

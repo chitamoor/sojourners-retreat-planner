@@ -424,28 +424,66 @@ function PriceRangeGuide({ fixedConfig }: { fixedConfig: FixedCostConfig }) {
       </div>
       <div className="space-y-2">
         {allActiveTiers.map(tier => {
-          const inRange = tier.totalPerPerson >= TARGET_PRICE_MIN && tier.totalPerPerson <= TARGET_PRICE_MAX;
-          const nearRange = tier.totalPerPerson < TARGET_PRICE_MIN && tier.totalPerPerson >= TARGET_PRICE_MIN * 0.93;
-          return (
-            <div key={tier.id} className="flex items-center gap-3">
+          const showBoth = fixedConfig.earlyBirdHeadcount > 0;
+          const inRangeReg = tier.totalPerPerson >= TARGET_PRICE_MIN && tier.totalPerPerson <= TARGET_PRICE_MAX;
+          const nearRangeReg = tier.totalPerPerson < TARGET_PRICE_MIN && tier.totalPerPerson >= TARGET_PRICE_MIN * 0.93;
+          const inRangeEarly = tier.earlyBirdTotalPerPerson >= TARGET_PRICE_MIN && tier.earlyBirdTotalPerPerson <= TARGET_PRICE_MAX;
+          const nearRangeEarly = tier.earlyBirdTotalPerPerson < TARGET_PRICE_MIN && tier.earlyBirdTotalPerPerson >= TARGET_PRICE_MIN * 0.93;
+
+          const regularRow = (
+            <div key={`${tier.id}-reg`} className="flex items-center gap-3">
               <div className="w-40 shrink-0">
-                <span className="text-xs text-slate-600">{tier.label}</span>
+                <span className="text-xs text-slate-600">{showBoth ? `${tier.label} (regular)` : tier.label}</span>
               </div>
               <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${inRange ? 'bg-emerald-400' : nearRange ? 'bg-amber-400' : 'bg-slate-300'}`}
+                  className={`h-full rounded-full ${inRangeReg ? 'bg-emerald-400' : nearRangeReg ? 'bg-amber-400' : 'bg-slate-300'}`}
                   style={{ width: `${Math.min(100, (tier.totalPerPerson / TARGET_PRICE_MAX) * 100)}%` }}
                 />
               </div>
               <div className="w-20 text-right shrink-0">
-                <span className={`text-xs font-semibold ${inRange ? 'text-emerald-700' : nearRange ? 'text-amber-700' : 'text-slate-400'}`}>
+                <span className={`text-xs font-semibold ${inRangeReg ? 'text-emerald-700' : nearRangeReg ? 'text-amber-700' : 'text-slate-400'}`}>
                   {fmt(tier.totalPerPerson)}
                 </span>
               </div>
               <div className="w-14 shrink-0">
-                {inRange && <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">✓ In range</span>}
-                {nearRange && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">≈ Close</span>}
+                {inRangeReg && <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">✓ In range</span>}
+                {nearRangeReg && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">≈ Close</span>}
               </div>
+            </div>
+          );
+
+          if (!showBoth) {
+            return <div key={tier.id}>{regularRow}</div>;
+          }
+
+          const earlyRow = (
+            <div key={`${tier.id}-early`} className="flex items-center gap-3">
+              <div className="w-40 shrink-0">
+                <span className="text-xs text-slate-600">{tier.label} (early bird)</span>
+              </div>
+              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${inRangeEarly ? 'bg-emerald-400' : nearRangeEarly ? 'bg-amber-400' : 'bg-slate-300'}`}
+                  style={{ width: `${Math.min(100, (tier.earlyBirdTotalPerPerson / TARGET_PRICE_MAX) * 100)}%` }}
+                />
+              </div>
+              <div className="w-20 text-right shrink-0">
+                <span className={`text-xs font-semibold ${inRangeEarly ? 'text-emerald-700' : nearRangeEarly ? 'text-amber-700' : 'text-slate-400'}`}>
+                  {fmt(tier.earlyBirdTotalPerPerson)}
+                </span>
+              </div>
+              <div className="w-14 shrink-0">
+                {inRangeEarly && <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">✓ In range</span>}
+                {nearRangeEarly && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">≈ Close</span>}
+              </div>
+            </div>
+          );
+
+          return (
+            <div key={tier.id} className="space-y-1">
+              {regularRow}
+              {earlyRow}
             </div>
           );
         })}

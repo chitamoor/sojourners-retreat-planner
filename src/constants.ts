@@ -77,6 +77,10 @@ export const DEFAULTS = {
   fixedCostMax: 70,
   expectedAttendees: 250,
   childrenUnder3: 0,
+  earlyBirdHeadcount: 0,
+  earlyBirdDiscountMin: 25,
+  earlyBirdDiscountMax: 75,
+  earlyBirdDiscountPerPerson: 50,
 
   // Default room allocation split (28 studio + 29 penthouse bookable). Solo and Penthouse 2-person not offered.
   studioKingSolo: 0,

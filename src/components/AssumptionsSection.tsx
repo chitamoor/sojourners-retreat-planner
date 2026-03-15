@@ -45,6 +45,12 @@ export default function AssumptionsSection() {
               <strong>Bookable rooms</strong> for participants: <strong>28 Studio King</strong> and <strong>29 Penthouse</strong> (57 total). The hotel is paid for 29 Studio + 30 Penthouse (59 rooms; 1 Studio comp).
             </p>
           </div>
+          <div className="flex gap-3">
+            <span className="text-slate-400 shrink-0">•</span>
+            <p className="text-sm text-slate-700">
+              <strong>Early bird</strong> registrations receive a configurable discount per person ($25–$75 off the regular price).
+            </p>
+          </div>
         </div>
       )}
     </div>

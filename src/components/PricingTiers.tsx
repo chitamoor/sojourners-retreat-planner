@@ -14,6 +14,8 @@ import { CONTRACT } from '../constants';
 
 interface Props {
   tiers: PricingTier[];
+  /** When > 0, show early bird price alongside regular. */
+  earlyBirdHeadcount: number;
 }
 
 const ROOM_COLORS: Record<string, { card: string; badge: string; bar: string }> = {
@@ -29,7 +31,7 @@ const ROOM_COLORS: Record<string, { card: string; badge: string; bar: string }> 
   },
 };
 
-export default function PricingTiers({ tiers }: Props) {
+export default function PricingTiers({ tiers, earlyBirdHeadcount }: Props) {
   const activeTiers = tiers.filter(t => t.roomCount > 0);
   const chartData = tiers.map(t => ({
     name: shortLabel(t.label),
@@ -81,9 +83,26 @@ export default function PricingTiers({ tiers }: Props) {
               </p>
 
               <div className="relative group/price mb-3 inline-flex items-baseline gap-1 cursor-help">
-                <span className="text-2xl font-bold text-slate-800">{fmt(tier.totalPerPerson)}</span>
-                <span className="text-xs text-slate-400 select-none">ⓘ</span>
-                {isActive && <PriceBreakdownTooltip tier={tier} />}
+                {earlyBirdHeadcount > 0 ? (
+                  <div className="space-y-0.5">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-slate-800">{fmt(tier.totalPerPerson)}</span>
+                      <span className="text-xs text-slate-400 select-none">ⓘ</span>
+                      {isActive && <PriceBreakdownTooltip tier={tier} showEarlyBird />}
+                    </div>
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium text-emerald-700">Early bird:</span> {fmt(tier.earlyBirdTotalPerPerson)}
+                      <span className="text-slate-400 mx-1">·</span>
+                      <span className="text-slate-500">Regular:</span> {fmt(tier.totalPerPerson)}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-slate-800">{fmt(tier.totalPerPerson)}</span>
+                    <span className="text-xs text-slate-400 select-none">ⓘ</span>
+                    {isActive && <PriceBreakdownTooltip tier={tier} showEarlyBird={false} />}
+                  </>
+                )}
               </div>
 
               <div className="space-y-1 text-xs text-slate-500 border-t border-slate-200 pt-2">
@@ -177,7 +196,7 @@ function occupantLabel(n: number): string {
   return `Shared — ${n} people`;
 }
 
-function PriceBreakdownTooltip({ tier }: { tier: PricingTier }) {
+function PriceBreakdownTooltip({ tier, showEarlyBird }: { tier: PricingTier; showEarlyBird?: boolean }) {
   const rate =
     tier.roomType === 'studio'
       ? CONTRACT.rooms.studioKing.ratePerNight
@@ -203,8 +222,19 @@ function PriceBreakdownTooltip({ tier }: { tier: PricingTier }) {
         />
         <CalcRow label="+ retreat cost" value={`+ ${fmt(tier.fixedCostPerPerson)}`} muted />
         <div className="my-1.5 border-t border-slate-600" />
-        <CalcRow label="Per person" value={fmt(tier.totalPerPerson)} bold highlight />
+        <CalcRow label="Regular per person" value={fmt(tier.totalPerPerson)} bold highlight />
       </div>
+      {showEarlyBird && (
+        <>
+          <div className="my-1.5 border-t border-slate-600" />
+          <p className="text-emerald-300 font-semibold mb-1">Early bird (discount off regular)</p>
+          <div className="space-y-1 font-mono text-slate-200">
+            <CalcRow label="Regular per person" value={fmt(tier.totalPerPerson)} />
+            <CalcRow label="− discount" value={`− ${fmt(tier.totalPerPerson - tier.earlyBirdTotalPerPerson)}`} muted />
+            <CalcRow label="Early bird per person" value={fmt(tier.earlyBirdTotalPerPerson)} bold />
+          </div>
+        </>
+      )}
       <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
     </div>
   );

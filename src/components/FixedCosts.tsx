@@ -5,13 +5,18 @@ import { fmt } from '../utils/pricing';
 interface Props {
   config: FixedCostConfig;
   onChange: (config: FixedCostConfig) => void;
+  /** Max headcount (from current allocation) to cap early bird input. */
+  maxHeadcount: number;
 }
 
-export default function FixedCosts({ config, onChange }: Props) {
+export default function FixedCosts({ config, onChange, maxHeadcount }: Props) {
 
   function set<K extends keyof FixedCostConfig>(key: K, value: FixedCostConfig[K]) {
     onChange({ ...config, [key]: value });
   }
+
+  const earlyBirdMax = Math.max(0, maxHeadcount);
+  const earlyBirdValue = Math.min(config.earlyBirdHeadcount, earlyBirdMax);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -23,7 +28,7 @@ export default function FixedCosts({ config, onChange }: Props) {
         </div>
       </div>
 
-      <div className="max-w-md">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
         {/* Retreat cost per person */}
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
           <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -59,6 +64,52 @@ export default function FixedCosts({ config, onChange }: Props) {
                 ${v}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Early bird registrations + discount */}
+        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Early bird
+          </label>
+          <p className="text-xs text-slate-500 mb-3">
+            Number of early bird registrations and discount per person
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-medium text-slate-600 mb-1">Registrations</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={earlyBirdMax}
+                  value={earlyBirdValue}
+                  onChange={e => set('earlyBirdHeadcount', Math.min(Number(e.target.value), earlyBirdMax))}
+                  className="flex-1 accent-emerald-500"
+                />
+                <span className="text-base font-bold text-emerald-700 tabular-nums w-10 text-right">{earlyBirdValue}</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">of {earlyBirdMax} paying attendees</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-600 mb-1">Discount per person</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 w-6">{fmt(DEFAULTS.earlyBirdDiscountMin)}</span>
+                <input
+                  type="range"
+                  min={DEFAULTS.earlyBirdDiscountMin}
+                  max={DEFAULTS.earlyBirdDiscountMax}
+                  step={1}
+                  value={config.earlyBirdDiscountPerPerson}
+                  onChange={e => set('earlyBirdDiscountPerPerson', Number(e.target.value))}
+                  className="flex-1 accent-emerald-500"
+                />
+                <span className="text-xs text-slate-400 w-6">{fmt(DEFAULTS.earlyBirdDiscountMax)}</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                <span className="font-bold text-emerald-700">{fmt(config.earlyBirdDiscountPerPerson)}</span> off regular price
+              </p>
+            </div>
           </div>
         </div>
       </div>

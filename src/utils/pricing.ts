@@ -11,9 +11,19 @@ export function roomTotalCost(ratePerNight: number): number {
   return ratePerNight * NIGHTS * (1 + TAX);
 }
 
-/** Per-person room cost for a given occupancy level */
+/** Total cost for one room for the full stay (no tax — early bird) */
+export function roomTotalCostNoTax(ratePerNight: number): number {
+  return ratePerNight * NIGHTS;
+}
+
+/** Per-person room cost for a given occupancy level (with tax) */
 export function roomCostPerPerson(ratePerNight: number, occupants: number): number {
   return roomTotalCost(ratePerNight) / occupants;
+}
+
+/** Per-person room cost for a given occupancy level (no tax — early bird) */
+export function roomCostPerPersonNoTax(ratePerNight: number, occupants: number): number {
+  return roomTotalCostNoTax(ratePerNight) / occupants;
 }
 
 /** Total headcount from a given room allocation */
@@ -67,6 +77,8 @@ export function computePricingTiers(
       roomCount: alloc.studioKingShared,
       headcount: alloc.studioKingShared * 2,
       isBestValue: false,
+      earlyBirdRoomCostPerPerson: 0,
+      earlyBirdTotalPerPerson: 0,
     },
     {
       id: 'studio-3',
@@ -79,6 +91,8 @@ export function computePricingTiers(
       roomCount: alloc.studioKing3person,
       headcount: alloc.studioKing3person * 3,
       isBestValue: false,
+      earlyBirdRoomCostPerPerson: 0,
+      earlyBirdTotalPerPerson: 0,
     },
     {
       id: 'penthouse-3',
@@ -91,6 +105,8 @@ export function computePricingTiers(
       roomCount: alloc.penthouse3person,
       headcount: alloc.penthouse3person * 3,
       isBestValue: false,
+      earlyBirdRoomCostPerPerson: 0,
+      earlyBirdTotalPerPerson: 0,
     },
     {
       id: 'penthouse-4',
@@ -103,6 +119,8 @@ export function computePricingTiers(
       roomCount: alloc.penthouse4person,
       headcount: alloc.penthouse4person * 4,
       isBestValue: false,
+      earlyBirdRoomCostPerPerson: 0,
+      earlyBirdTotalPerPerson: 0,
     },
     {
       id: 'penthouse-5',
@@ -115,12 +133,16 @@ export function computePricingTiers(
       roomCount: alloc.penthouse5person,
       headcount: alloc.penthouse5person * 5,
       isBestValue: false,
+      earlyBirdRoomCostPerPerson: 0,
+      earlyBirdTotalPerPerson: 0,
     },
   ];
 
-  // Compute totals: room share + fixed retreat cost only
+  // Compute totals: regular (room + tax + fixed); early bird = regular − discount
   tiers.forEach(t => {
     t.totalPerPerson = t.roomCostPerPerson + t.fixedCostPerPerson;
+    t.earlyBirdTotalPerPerson = Math.max(0, t.totalPerPerson - fixedConfig.earlyBirdDiscountPerPerson);
+    t.earlyBirdRoomCostPerPerson = t.earlyBirdTotalPerPerson - t.fixedCostPerPerson;
   });
 
   // Mark best value (lowest total among tiers with at least 1 room)
@@ -155,10 +177,35 @@ export function computeFinancialSummary(
   const headcount = totalHeadcount(alloc);
   const roomsUsed = totalRoomsUsed(alloc);
 
-  // Base revenue from tier prices (room share + retreat cost)
-  const baseRevenue = tiers.reduce((sum, t) => {
+  // Cap early bird at headcount and prorate across tiers
+  const earlyBirdTotal = Math.min(fixedConfig.earlyBirdHeadcount, headcount);
+  const earlyCountByTier: number[] = [];
+  if (headcount > 0 && earlyBirdTotal > 0) {
+    let sum = 0;
+    tiers.forEach((t, i) => {
+      const earlyCount = Math.round((earlyBirdTotal * t.headcount) / headcount);
+      earlyCountByTier[i] = Math.min(earlyCount, t.headcount);
+      sum += earlyCountByTier[i];
+    });
+    // Normalize: adjust largest tier so sum === earlyBirdTotal
+    const diff = earlyBirdTotal - sum;
+    if (diff !== 0) {
+      let idx = 0;
+      for (let i = 1; i < tiers.length; i++) {
+        if (tiers[i].headcount > tiers[idx].headcount) idx = i;
+      }
+      earlyCountByTier[idx] = Math.max(0, Math.min(tiers[idx].headcount, earlyCountByTier[idx] + diff));
+    }
+  } else {
+    tiers.forEach(() => earlyCountByTier.push(0));
+  }
+
+  // Base revenue: early bird pay earlyBirdTotalPerPerson, rest pay totalPerPerson
+  const baseRevenue = tiers.reduce((sum, t, i) => {
     if (t.roomCount === 0) return sum;
-    return sum + t.totalPerPerson * t.headcount;
+    const earlyCount = earlyCountByTier[i] ?? 0;
+    const regularCount = t.headcount - earlyCount;
+    return sum + earlyCount * t.earlyBirdTotalPerPerson + regularCount * t.totalPerPerson;
   }, 0);
 
   const specialGuestCost = specialGuestRoomsCost();
