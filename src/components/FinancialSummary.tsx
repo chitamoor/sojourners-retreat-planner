@@ -2,6 +2,60 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import type { FinancialSummary as FinancialSummaryType } from '../types';
 import { fmt } from '../utils/pricing';
 
+/** Reusable hover tooltip showing how surplus is calculated. Use with a parent that has `relative group cursor-help`. */
+export function SurplusExplanationTooltip({
+  surplus,
+  totalRevenueCollected,
+  totalHotelBill,
+  accommodationsCost,
+  meetingCost,
+  placement = 'above',
+}: {
+  surplus: number;
+  totalRevenueCollected: number;
+  totalHotelBill: number;
+  accommodationsCost: number;
+  meetingCost: number;
+  placement?: 'above' | 'below';
+}) {
+  const positionClass = placement === 'above'
+    ? 'bottom-full left-1/2 -translate-x-1/2 mb-2'
+    : 'top-full left-1/2 -translate-x-1/2 mt-2';
+  const arrowClass = placement === 'above'
+    ? 'left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800'
+    : 'left-1/2 bottom-full -translate-x-1/2 border-4 border-transparent border-b-slate-800';
+  return (
+    <div className={`pointer-events-none absolute ${positionClass} z-50 w-64 rounded-xl bg-slate-800 px-3 py-2.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100`}>
+      <p className="font-semibold text-slate-100 mb-2">How surplus is calculated</p>
+      <div className="space-y-1 font-mono">
+        <div className="flex justify-between gap-3">
+          <span className="text-slate-300">Total fees collected</span>
+          <span className="shrink-0">{fmt(totalRevenueCollected)}</span>
+        </div>
+        <div className="flex justify-between gap-3 text-slate-400">
+          <span>− Total hotel bill</span>
+          <span className="shrink-0">{fmt(totalHotelBill)}</span>
+        </div>
+        <div className="pl-2 border-l border-slate-600 text-slate-400">
+          <div className="flex justify-between gap-3">
+            <span>Accommodations</span>
+            <span className="shrink-0">{fmt(accommodationsCost)}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span>Meeting rooms</span>
+            <span className="shrink-0">{fmt(meetingCost)}</span>
+          </div>
+        </div>
+        <div className="border-t border-slate-600 pt-1.5 mt-1.5 flex justify-between gap-3 font-semibold text-white">
+          <span>= Surplus</span>
+          <span className="shrink-0">{surplus >= 0 ? '+' : ''}{fmt(surplus)}</span>
+        </div>
+      </div>
+      <div className={`absolute ${arrowClass}`} />
+    </div>
+  );
+}
+
 interface Props {
   summary: FinancialSummaryType;
 }
@@ -138,13 +192,22 @@ export default function FinancialSummary({ summary }: Props) {
                   bold
                 />
               </div>
-              <div className={`flex items-center justify-between rounded-xl p-3 mt-2 ${hasSurplus ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+              <div className={`relative group cursor-help flex items-center justify-between rounded-xl p-3 mt-2 ${hasSurplus ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
                 <span className={`font-semibold text-sm ${hasSurplus ? 'text-emerald-700' : 'text-red-700'}`}>
                   {hasSurplus ? 'Surplus' : 'Deficit'}
+                  <span className="ml-1.5 inline-block text-slate-400 opacity-70 group-hover:opacity-100" aria-hidden>ⓘ</span>
                 </span>
                 <span className={`font-bold text-lg ${hasSurplus ? 'text-emerald-700' : 'text-red-700'}`}>
                   {hasSurplus ? '+' : '−'}{fmt(Math.abs(surplus))}
                 </span>
+                <SurplusExplanationTooltip
+                  surplus={surplus}
+                  totalRevenueCollected={totalRevenueCollected}
+                  totalHotelBill={totalHotelBill}
+                  accommodationsCost={accommodationsCost}
+                  meetingCost={meetingCost}
+                  placement="above"
+                />
               </div>
             </div>
           </div>
@@ -304,35 +367,14 @@ function SurplusCard({
       </p>
       <p className="text-2xl font-bold">{hasSurplus ? '+' : '−'}{fmt(Math.abs(surplus))}</p>
       <p className="text-xs mt-1 opacity-70">{hasSurplus ? 'Above break-even' : 'Below break-even'}</p>
-      {/* Hover: how surplus is calculated */}
-      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-xl bg-slate-800 px-3 py-2.5 text-xs text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100">
-        <p className="font-semibold text-slate-100 mb-2">How surplus is calculated</p>
-        <div className="space-y-1 font-mono">
-          <div className="flex justify-between gap-3">
-            <span className="text-slate-300">Total fees collected</span>
-            <span className="shrink-0">{fmt(totalRevenueCollected)}</span>
-          </div>
-          <div className="flex justify-between gap-3 text-slate-400">
-            <span>− Total hotel bill</span>
-            <span className="shrink-0">{fmt(totalHotelBill)}</span>
-          </div>
-          <div className="pl-2 border-l border-slate-600 text-slate-400">
-            <div className="flex justify-between gap-3">
-              <span>Accommodations</span>
-              <span className="shrink-0">{fmt(accommodationsCost)}</span>
-            </div>
-            <div className="flex justify-between gap-3">
-              <span>Meeting rooms</span>
-              <span className="shrink-0">{fmt(meetingCost)}</span>
-            </div>
-          </div>
-          <div className="border-t border-slate-600 pt-1.5 mt-1.5 flex justify-between gap-3 font-semibold text-white">
-            <span>= Surplus</span>
-            <span className="shrink-0">{surplus >= 0 ? '+' : ''}{fmt(surplus)}</span>
-          </div>
-        </div>
-        <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
-      </div>
+      <SurplusExplanationTooltip
+        surplus={surplus}
+        totalRevenueCollected={totalRevenueCollected}
+        totalHotelBill={totalHotelBill}
+        accommodationsCost={accommodationsCost}
+        meetingCost={meetingCost}
+        placement="above"
+      />
     </div>
   );
 }

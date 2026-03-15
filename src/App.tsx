@@ -5,7 +5,7 @@ import { computePricingTiers, computeFinancialSummary, totalHeadcount } from './
 import HotelReference from './components/HotelReference';
 import FixedCosts from './components/FixedCosts';
 import PricingTiers from './components/PricingTiers';
-import FinancialSummary from './components/FinancialSummary';
+import FinancialSummary, { SurplusExplanationTooltip } from './components/FinancialSummary';
 import PasswordGate from './components/PasswordGate';
 import Recommendations from './components/Recommendations';
 import OccupantDistribution from './components/OccupantDistribution';
@@ -122,7 +122,7 @@ export default function App() {
       </header>
 
       {/* Surplus / Deficit badge — sticky below header */}
-      <div className={`sticky top-[73px] z-10 border-b ${summary.surplus >= 0 ? 'bg-emerald-600' : 'bg-red-600'}`}>
+      <div className={`relative group sticky top-[73px] z-10 cursor-help border-b ${summary.surplus >= 0 ? 'bg-emerald-600' : 'bg-red-600'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
           <span className="text-white text-xs font-medium opacity-80">
             {summary.surplus >= 0 ? '✓ Break-even achieved' : '✗ Below break-even — adjust allocation'}
@@ -132,8 +132,17 @@ export default function App() {
             <span className="text-xs font-normal opacity-75 ml-1">
               {summary.surplus >= 0 ? 'surplus' : 'deficit'}
             </span>
+            <span className="ml-1.5 inline-block opacity-75 group-hover:opacity-100" aria-hidden>ⓘ</span>
           </span>
         </div>
+        <SurplusExplanationTooltip
+          surplus={summary.surplus}
+          totalRevenueCollected={summary.totalRevenueCollected}
+          totalHotelBill={summary.totalHotelBill}
+          accommodationsCost={summary.accommodationsCost}
+          meetingCost={summary.meetingCost}
+          placement="below"
+        />
       </div>
 
       {/* Main content */}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CONTRACT, PAID_STUDIO, PAID_PENTHOUSE } from '../constants';
 import type { RoomAllocation, RoomMix, FixedCostConfig, FinancialSummary } from '../types';
 import { computePricingTiers, computeFinancialSummary, fmt, totalHeadcount } from '../utils/pricing';
+import { SurplusExplanationTooltip } from './FinancialSummary';
 
 interface Props {
   fixedConfig: FixedCostConfig;
@@ -276,9 +277,17 @@ function PlanningScenarioCard({ s }: { s: PlanningScenarioMetrics }) {
       </div>
 
       {/* Surplus / deficit pill */}
-      <div className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-xs font-medium ${hasSurplus ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+      <div className={`relative group cursor-help flex items-center justify-between rounded-lg px-3 py-1.5 text-xs font-medium ${hasSurplus ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
         <span>{hasSurplus ? '✓ Surplus after hotel bill' : '⚠ Deficit vs hotel bill'}</span>
-        <span>{hasSurplus ? '+' : '−'}{fmt(Math.abs(s.summary.surplus))}</span>
+        <span>{hasSurplus ? '+' : '−'}{fmt(Math.abs(s.summary.surplus))}<span className="ml-1 opacity-70 group-hover:opacity-100" aria-hidden>ⓘ</span></span>
+        <SurplusExplanationTooltip
+          surplus={s.summary.surplus}
+          totalRevenueCollected={s.summary.totalRevenueCollected}
+          totalHotelBill={s.summary.totalHotelBill}
+          accommodationsCost={s.summary.accommodationsCost}
+          meetingCost={s.summary.meetingCost}
+          placement="above"
+        />
       </div>
 
       {/* Trade-off note */}

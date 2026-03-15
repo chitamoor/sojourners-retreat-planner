@@ -73,7 +73,7 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
   }
 
   const showEarlyBirdCol = fixedConfig.earlyBirdHeadcount > 0;
-  const cols: number[] = showEarlyBirdCol ? [48, 22, 16, 22, 22, 24, 26] : [60, 28, 22, 28, 28, 32];
+  const cols: number[] = showEarlyBirdCol ? [54, 20, 16, 20, 22, 22, 26] : [62, 24, 18, 24, 26, 28];
   const headers = showEarlyBirdCol
     ? ['Tier', 'Rooms', 'People', 'Room', 'Retreat', 'Early bird', 'Regular']
     : ['Tier', 'Rooms', 'People', 'Room Cost', 'Retreat', 'Total/Person'];
@@ -89,9 +89,11 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
     tc(pdf, SLATE);
     pdf.setFontSize(8.5);
     pdf.setFont('helvetica', tier.isBestValue ? 'bold' : 'normal');
+    const tierLabel = tier.label + (tier.isBestValue ? ' \u2605' : '');
+    const tierLabelFitted = truncateToWidth(pdf, tierLabel, cols[0] - 4);
     const vals = showEarlyBirdCol
       ? [
-          tier.label + (tier.isBestValue ? ' \u2605' : ''),
+          tierLabelFitted,
           String(tier.roomCount),
           String(tier.headcount),
           fmt(tier.roomCostPerPerson),
@@ -100,7 +102,7 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
           fmt(tier.totalPerPerson),
         ]
       : [
-          tier.label + (tier.isBestValue ? ' \u2605' : ''),
+          tierLabelFitted,
           String(tier.roomCount),
           String(tier.headcount),
           fmt(tier.roomCostPerPerson),
@@ -211,6 +213,33 @@ export async function exportToPdf(options: ExportOptions, onProgress?: (pct: num
     pdf.text(value, M + CW - 4, y, { align: 'right' });
     y += 7;
   });
+  y += 4;
+
+  // Surplus explanation (how we arrived at surplus/deficit for this analysis)
+  checkPageBreak(24);
+  tc(pdf, SLATE);
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('How surplus is calculated', M + 4, y);
+  y += 5;
+  pdf.setFont('helvetica', 'normal');
+  const surplusRows = [
+    ['Total fees collected from attendees', fmt(summary.totalRevenueCollected)],
+    ['− Total hotel bill (accommodations + meeting rooms)', fmt(summary.totalHotelBill)],
+    [hasSurplus ? '= Surplus' : '= Deficit', (summary.surplus >= 0 ? '+' : '\u2212') + fmt(Math.abs(summary.surplus))],
+  ];
+  surplusRows.forEach(([label, value], i) => {
+    if (i % 2 === 0) {
+      fill(pdf, LIGHT);
+      pdf.rect(M, y - 4, CW, 7, 'F');
+    }
+    tc(pdf, i === 2 ? (hasSurplus ? EMERALD : RED) : SLATE);
+    pdf.setFont('helvetica', i === 2 ? 'bold' : 'normal');
+    pdf.setFontSize(8.5);
+    pdf.text(label, M + 4, y);
+    pdf.text(value, M + CW - 4, y, { align: 'right' });
+    y += 7;
+  });
   y += 6;
 
   onProgress?.(75);
@@ -279,4 +308,20 @@ function tableHeader(pdf: jsPDF, headers: string[], cols: number[], margin: numb
     x += cols[i];
   });
   pdf.setTextColor(71, 85, 105);
+}
+
+/** Truncate text to fit within maxWidth (mm), appending '...' if needed. */
+function truncateToWidth(pdf: jsPDF, text: string, maxWidthMm: number): string {
+  const ellipsis = '…';
+  if (pdf.getTextWidth(text) <= maxWidthMm) return text;
+  let low = 0;
+  let high = text.length;
+  while (low + 1 < high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = text.slice(0, mid) + ellipsis;
+    if (pdf.getTextWidth(candidate) <= maxWidthMm) low = mid;
+    else high = mid;
+  }
+  const truncated = text.slice(0, low) + ellipsis;
+  return pdf.getTextWidth(truncated) <= maxWidthMm ? truncated : text.slice(0, Math.max(0, low - 1)) + ellipsis;
 }

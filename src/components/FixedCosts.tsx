@@ -28,7 +28,7 @@ export default function FixedCosts({ config, onChange, maxHeadcount }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+      <div className="max-w-3xl">
         {/* Retreat cost per person */}
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
           <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -67,8 +67,8 @@ export default function FixedCosts({ config, onChange, maxHeadcount }: Props) {
           </div>
         </div>
 
-        {/* Early bird registrations + discount */}
-        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+        {/* Early bird — separate distinct section */}
+        <div className="mt-6 rounded-xl border border-teal-200 bg-teal-50/80 p-4">
           <label className="block text-sm font-semibold text-slate-700 mb-1">
             Early bird
           </label>
@@ -85,9 +85,9 @@ export default function FixedCosts({ config, onChange, maxHeadcount }: Props) {
                   max={earlyBirdMax}
                   value={earlyBirdValue}
                   onChange={e => set('earlyBirdHeadcount', Math.min(Number(e.target.value), earlyBirdMax))}
-                  className="flex-1 accent-emerald-500"
+                  className="flex-1 accent-teal-500"
                 />
-                <span className="text-base font-bold text-emerald-700 tabular-nums w-10 text-right">{earlyBirdValue}</span>
+                <span className="text-base font-bold text-teal-700 tabular-nums w-10 text-right">{earlyBirdValue}</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">of {earlyBirdMax} paying attendees</p>
             </div>
@@ -102,12 +102,12 @@ export default function FixedCosts({ config, onChange, maxHeadcount }: Props) {
                   step={1}
                   value={config.earlyBirdDiscountPerPerson}
                   onChange={e => set('earlyBirdDiscountPerPerson', Number(e.target.value))}
-                  className="flex-1 accent-emerald-500"
+                  className="flex-1 accent-teal-500"
                 />
                 <span className="text-xs text-slate-400 w-6">{fmt(DEFAULTS.earlyBirdDiscountMax)}</span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                <span className="font-bold text-emerald-700">{fmt(config.earlyBirdDiscountPerPerson)}</span> off regular price
+                <span className="font-bold text-teal-700">{fmt(config.earlyBirdDiscountPerPerson)}</span> off regular price
               </p>
             </div>
           </div>
