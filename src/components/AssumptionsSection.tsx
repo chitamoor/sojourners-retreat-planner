@@ -48,7 +48,7 @@ export default function AssumptionsSection() {
           <div className="flex gap-3">
             <span className="text-slate-400 shrink-0">•</span>
             <p className="text-sm text-slate-700">
-              <strong>Early bird</strong> registrations receive a configurable discount per person ($25–$75 off the regular price).
+              <strong>Early bird</strong> registrations receive a $25 discount per person off the regular price.
             </p>
           </div>
         </div>
