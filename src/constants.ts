@@ -49,12 +49,12 @@ export const CONTRACT = {
   },
 
   accommodations: {
-    // Pre-calculated: 29 Studio + 30 Penthouse paid (1 Studio comp), 2 nights, with tax
-    subtotalBeforeTax: 24742,   // 29×169×2 + 30×249×2
-    totalWithTax: 28246.72,     // subtotal × (1 + taxes.total)
+    // Pre-calculated: 30 Studio + 29 Penthouse paid (1 Penthouse comp), 2 nights, with tax
+    subtotalBeforeTax: 24582,   // 30×169×2 + 29×249×2
+    totalWithTax: 28071.45,     // subtotal × (1 + taxes.total)
   },
 
-  grandTotal: 34154.96,         // accommodations.totalWithTax + meetingRooms.totalEstimated
+  grandTotal: 33979.69,         // accommodations.totalWithTax + meetingRooms.totalEstimated
 
   attritionThreshold: 0.80, // Hotel requires 80% room usage or attrition fees apply
 } as const;
@@ -67,9 +67,9 @@ export const BOOKABLE_STUDIO = 28;
 export const BOOKABLE_PENTHOUSE = 29;
 export const BOOKABLE_TOTAL = BOOKABLE_STUDIO + BOOKABLE_PENTHOUSE; // 57
 
-/** Rooms we pay the hotel for: 1 Studio is complimentary from the hotel; we pay for 29 Studio + 30 Penthouse = 59. */
-export const PAID_STUDIO = 29;
-export const PAID_PENTHOUSE = 30;
+/** Rooms we pay the hotel for: 1 Penthouse is complimentary from the hotel; we pay for 30 Studio + 29 Penthouse = 59. */
+export const PAID_STUDIO = 30;
+export const PAID_PENTHOUSE = 29;
 
 export const DEFAULTS = {
   fixedCostPerPerson: 60,    // midpoint of $50–$70 range

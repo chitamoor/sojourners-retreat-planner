@@ -165,7 +165,7 @@ export function specialGuestRoomsCost(): number {
 /** Compute full financial summary.
  *
  * @param committedRooms  When provided (from the main app), the hotel bill uses these PAID room counts
- *   (29 Studio + 30 Penthouse; 1 Studio is comp). Revenue includes base tier fees plus a per-person
+ *   (30 Studio + 29 Penthouse; 1 Penthouse is comp). Revenue includes base tier fees plus a per-person
  *   surcharge for the 2 special-guest rooms. When absent, falls back to allocation-based billing.
  */
 export function computeFinancialSummary(

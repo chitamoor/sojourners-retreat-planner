@@ -42,7 +42,7 @@ export default function AssumptionsSection() {
           <div className="flex gap-3">
             <span className="text-slate-400 shrink-0">•</span>
             <p className="text-sm text-slate-700">
-              <strong>Bookable rooms</strong> for participants: <strong>28 Studio King</strong> and <strong>29 Penthouse</strong> (57 total). The hotel is paid for 29 Studio + 30 Penthouse (59 rooms; 1 Studio comp).
+              <strong>Bookable rooms</strong> for participants: <strong>28 Studio King</strong> and <strong>29 Penthouse</strong> (57 total). The hotel is paid for 30 Studio + 29 Penthouse (59 rooms; 1 Penthouse comp).
             </p>
           </div>
           <div className="flex gap-3">
